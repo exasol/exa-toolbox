@@ -112,3 +112,129 @@ SELECT
 	SQL_TEXT 'SQL text'
 FROM
 	EXA_STATISTICS.EXA_DBA_PROFILE_RUNNING;
+
+
+
+CREATE OR REPLACE VIEW GENERAL_SYSTEM_INFO AS
+select
+param_name, param_value
+from
+SYS.EXA_METADATA
+where
+PARAM_NAME in
+(
+'databaseProductVersion',
+'databaseName'
+)
+union all
+
+select
+'Nodes' , cast(NODES   as VARCHAR(10))
+from
+EXA_SYSTEM_EVENTS
+where EVENT_TYPE = 'STARTUP'
+and measure_time = (select
+max(measure_time)
+from EXA_SYSTEM_EVENTS where EVENT_TYPE = 'STARTUP'
+)
+
+union all
+
+select
+'DBRAM (GiB)' , cast(DB_RAM_SIZE   as VARCHAR(10))
+from
+EXA_SYSTEM_EVENTS
+where EVENT_TYPE = 'STARTUP'
+and measure_time = (select
+max(measure_time)
+from EXA_SYSTEM_EVENTS where EVENT_TYPE = 'STARTUP'
+)
+
+union all
+
+select
+PARAM_NAME, PARAM_VALUE
+from
+"EXA_COMMANDLINE"
+where
+PARAM_NAME in
+(
+'soft_replicationborder_in_kb',
+'soft_replicationborder_in_numrows',
+'disableViewOptimization',
+'disableIndexIteratorScan',
+'auditing_enabled',
+'expiration_advanced_edition_features',
+'expiration_standard_edition_features'
+)
+
+order by 1;
+
+CREATE OR REPLACE VIEW SESSIONS AS
+select
+	SESSION_ID 'Session ID',
+	case when SESSION_ID = CURRENT_SESSION THEN true end 'Current Session',
+	case when instr(activity,' rows')!=0 and is_number(substr(activity,0,length(activity)-length(' rows'))) then to_char(to_number(substr(activity,0,length(activity)-length(' rows'))),'999G999G999G999G999G999G999G999') || ' rows' else activity end  'Activity',
+	USER_NAME 'User name',
+	STATUS 'Status',
+	COMMAND_NAME 'Command name',
+	STMT_ID 'Statement ID',
+	DURATION 'Duration',
+	QUERY_TIMEOUT 'Query timeout [sec]',
+	concat(TEMP_DB_RAM,' MiB') 'Temporary DB RAM',
+	LOGIN_TIME 'Login time',
+	CLIENT 'Client',
+	DRIVER 'Driver',
+	ENCRYPTED 'Encrpyted',
+	HOST 'Host',
+	OS_USER 'OS user',
+	OS_NAME 'OS name',
+	SCOPE_SCHEMA 'Scope schema',
+	PRIORITY 'Priority',
+	NICE 'Nice',
+	case when RESOURCES is not null then RESOURCES || '%' end 'Resources',
+	SQL_TEXT 'SQL text'
+from
+	EXA_DBA_SESSIONS
+order by session_id;
+
+CREATE OR REPLACE VIEW DB_SIZE_LAST_DAY AS
+SELECT
+   MEASURE_TIME 'Time',
+   RAW_OBJECT_SIZE  'RAW uncompressed [GiB]',
+   MEM_OBJECT_SIZE 'MEM compressed [GiB]',
+   case when MEM_OBJECT_SIZE > 0 then cast(RAW_OBJECT_SIZE/MEM_OBJECT_SIZE as DECIMAL(18,3)) else 0 end 'Compression RAW/MEM',
+   AUXILIARY_SIZE  'Auxiliary/Indices [GiB]',
+   STATISTICS_SIZE 'Statistics [GiB]',
+   RECOMMENDED_DB_RAM_SIZE 'Recommended DB RAM [GiB]',
+   STORAGE_SIZE 'Storage [GiB]',
+   USE 'Use in %',
+   OBJECT_COUNT 'Object count'
+FROM
+   EXA_STATISTICS.EXA_DB_SIZE_LAST_DAY
+order by 1 desc;
+
+CREATE OR REPLACE VIEW DB_SIZE_DAILY AS
+SELECT
+	INTERVAL_START 'Time',
+	RAW_OBJECT_SIZE_AVG 'RAW uncompressed AVG [GiB]',
+	RAW_OBJECT_SIZE_MAX  'RAW uncompressed MAX [GiB]',
+	MEM_OBJECT_SIZE_AVG  'MEM compressed AVG [GiB]',
+	MEM_OBJECT_SIZE_MAX  'MEM compressed MAX [GiB]',
+	case when MEM_OBJECT_SIZE_AVG > 0 then  cast(RAW_OBJECT_SIZE_AVG/MEM_OBJECT_SIZE_AVG as DECIMAL(18,3)) else null end 'Compression AVG RAW/MEM',
+	AUXILIARY_SIZE_AVG  'Auxiliary/Indices AVG [GiB]',
+	AUXILIARY_SIZE_MAX  'Auxiliary/Indices MAX [GiB]',
+	STATISTICS_SIZE_AVG 'Statistics AVG [GiB]',
+	STATISTICS_SIZE_MAX 'Statistics MAX [GiB]',
+	RECOMMENDED_DB_RAM_SIZE_AVG 'Recommended DB RAM AVG [GiB]',
+	RECOMMENDED_DB_RAM_SIZE_MAX  'Recommended DB RAM MAX [GiB]',
+	STORAGE_SIZE_AVG 'Storage AVG [GiB]',
+	STORAGE_SIZE_MAX 'Storage MAX [GiB]',
+	USE_AVG 'Use in % AVG',
+	USE_MAX 'Use in % MAX',
+	OBJECT_COUNT_AVG 'Object count AVG',
+	OBJECT_COUNT_MAX 'Object count MAX'
+FROM
+	EXA_STATISTICS.EXA_DB_SIZE_DAILY
+WHERE TRUNC(INTERVAL_START) >= add_days(current_date,-31)
+order by 1 desc;
