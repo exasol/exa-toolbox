@@ -28,6 +28,8 @@ EMITS ("repository" varchar(2000) UTF8, "filename" varchar(2000) UTF8, "link" va
 AS
 
 import urllib2
+import socket
+
 
 from HTMLParser import HTMLParser
 #################### Class Git Link Parser ##############################
@@ -81,7 +83,7 @@ class GitLinkParser(HTMLParser):
                 
            if attr_name == 'href' and attr_value.find('.') == -1 and attr_value.find('tree') != -1:
                isFolder = True
-               link = 'https://EXA_TOOLBOX.com' + attr_value
+               link = 'https://github.com' + attr_value
            if attr_name == 'title' and attr_value.find('Go to parent directory') != -1:
                ignoreFile = True
 
@@ -165,6 +167,10 @@ def get_files(repo, search_recursive, exclude_folders, ctx):
     
 
 #---------------------------------------------------------------#
+
+import ctypes
+import os
+
 def run(ctx):
     
     exclude_folders = str(ctx.exclude_folders).split(',')
@@ -174,6 +180,7 @@ def run(ctx):
     except urllib2.URLError as e:
         raise Exception('Could not establish a connection to Github. Please make sure your database has a connection to the internet.')
 
+    
     for item in file_list:
         try:
             data = urllib2.urlopen(item.link)
@@ -185,9 +192,8 @@ def run(ctx):
 
 /
 
-drop script EXA_TOOLBOX.GITHUB_LOAD_SCRIPTS_GET_CONTENT;
-SELECT EXA_TOOLBOX.GITHUB_LOAD_SCRIPTS_GET_CONTENT('https://EXA_TOOLBOX.com/EXASOL/database-migration', true, 'test') res FROM dual;
--- SELECT EXA_TOOLBOX.GITHUB_LOAD_SCRIPTS_GET_CONTENT('https://EXA_TOOLBOX.com/EXASOL/virtual-schemas', true) res FROM dual;
+--SELECT EXA_TOOLBOX.GITHUB_LOAD_SCRIPTS_GET_CONTENT('https://github.com/EXASOL/database-migration', true, 'test') res FROM dual;
+-- SELECT EXA_TOOLBOX.GITHUB_LOAD_SCRIPTS_GET_CONTENT('https://github.com/EXASOL/virtual-schemas', true) res FROM dual;
 
 
 -- ****************************************
@@ -591,7 +597,7 @@ exit(info_detailed, "stmt varchar(2000000), stmt_is_script varchar(2000), stmt_n
 
 --repository, file_filter, search_recursive
 EXECUTE SCRIPT EXA_TOOLBOX.GITHUB_LOAD_SCRIPTS(
-'https://EXA_TOOLBOX.com/EXASOL/database-migration' -- repository
+'https://github.com/EXASOL/exa-toolbox' -- repository
 , '' 			-- 	file_filter
 , 'Example.sql,load_scripts_from_github.sql' --	files_to_exclude
 , true			-- search_recursive
