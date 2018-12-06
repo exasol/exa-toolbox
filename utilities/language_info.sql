@@ -8,7 +8,7 @@
 CREATE SCHEMA IF NOT EXISTS EXA_toolbox;
 
 --/
-CREATE OR REPLACE R SCALAR SCRIPT r_info(all_details BOOLEAN) EMITS (key VARCHAR(200), val VARCHAR(100000)) AS
+CREATE OR REPLACE R SCALAR SCRIPT EXA_toolbox.r_info(all_details BOOLEAN) EMITS (key VARCHAR(200), val VARCHAR(100000)) AS
 run <- function(ctx) {
 
     getPkgDetails <- function(L, n) {
@@ -60,7 +60,7 @@ run <- function(ctx) {
 /
 
 --/
-CREATE OR REPLACE PYTHON SCALAR SCRIPT python_info(all_details BOOLEAN) EMITS (key VARCHAR(200), val VARCHAR(100000)) AS
+CREATE OR REPLACE PYTHON SCALAR SCRIPT EXA_toolbox.python_info(all_details BOOLEAN) EMITS (key VARCHAR(200), val VARCHAR(100000)) AS
 
 import pkg_resources
 import pkgutil
@@ -89,7 +89,7 @@ def run(ctx):
 /
 
 --/
-CREATE OR REPLACE LUA SCALAR SCRIPT lua_info(all_details BOOLEAN) EMITS (key VARCHAR(200), val VARCHAR(100000)) AS
+CREATE OR REPLACE LUA SCALAR SCRIPT EXA_toolbox.lua_info(all_details BOOLEAN) EMITS (key VARCHAR(200), val VARCHAR(100000)) AS
 
 function run(ctx)
     ctx.emit("exa.meta.script_language", exa.meta.script_language)
@@ -112,7 +112,7 @@ end
 /
 
 --/
-CREATE OR REPLACE JAVA SCALAR SCRIPT java_info(all_details BOOLEAN) EMITS (key VARCHAR(200), val VARCHAR(100000)) AS
+CREATE OR REPLACE JAVA SCALAR SCRIPT EXA_toolbox.java_info(all_details BOOLEAN) EMITS (key VARCHAR(200), val VARCHAR(100000)) AS
 
 import java.util.*;
 
