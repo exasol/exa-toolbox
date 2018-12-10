@@ -14,6 +14,8 @@ CREATE OR REPLACE TABLE pub2slack_channels(
 
     INSERT INTO pub2slack_channels VALUES ('general',  'TE100F6H2/BENTD9WD6/VByhPjjLtM5RJdSqXexKhgUc', 'slack_general');
     INSERT INTO pub2slack_channels VALUES ('slackbot', 'TE100F6H2/BE1KQFTA7/L4SVD0dAvWrO1fEbhEY4hsi0', NULL);
+
+    If pubrole is NULL then anyone can publish into the channel.
 */
 
 --/
@@ -28,7 +30,7 @@ CREATE OR REPLACE SCRIPT pub2slack(channel, message) RETURNS TABLE AS
         resp_code = -1
         resp_mesg = "Message is empty"
         all_ok = false
-    end 
+    end
 
     if all_ok and (channel == NULL or #channel == 0) then
         resp_code = -2
@@ -63,11 +65,10 @@ CREATE OR REPLACE SCRIPT pub2slack(channel, message) RETURNS TABLE AS
                 resp_mesg = res[1][2]
             end
         end
-    end    
+    end
 
     return {{resp_code, resp_mesg}}, "resp_code INT, resp_message VARCHAR(200)"
 /
-
 
 --/
 CREATE OR REPLACE PYTHON SCALAR SCRIPT pub2slackfn(webhook VARCHAR(256), message VARCHAR(100000)) EMITS (resp_code INT, resp_mesg VARCHAR(200)) AS
@@ -79,7 +80,7 @@ def run(ctx):
     host = "hooks.slack.com"
     path = "/services/" + ctx.webhook
     headers = {"Content-type": "application/json"}
-    
+
     sl = httplib.HTTPSConnection(host)
     sl.request("POST", path, '{"text": "' + ctx.message + '"}', headers)
     resp = sl.getresponse();
