@@ -220,9 +220,10 @@ CREATE OR REPLACE LUA SCRIPT EXA_TOOLBOX.GITHUB_LOAD_SCRIPTS(repository, file_fi
 
 
 -- checks whether the content of tokenlist starting at strt is a script
--- returns: boolean - isScript, String - scriptType, String -scriptName,  String -scriptComment
-function isScript(tokenlist, strt)
+-- returns: String - statementType, String - scriptType, String -scriptName,  String -scriptComment
+function getStmtType(tokenlist, strt)
 	
+	stmtType = 'STATEMENT'
 	scriptType = 'LUA' -- LUA is the default, other possible values are: JAVA, PYTHON, R
 	scriptComment = '' -- Collect comments before 'CREATE'-keyword in this String
 
@@ -233,7 +234,7 @@ function isScript(tokenlist, strt)
 	end
 
 	if(sqlparsing.normalize(tokenlist[strt]) ~= "CREATE") then
-		return false, 'NONE' , '', ''
+		return stmtType, 'NONE' , '', ''
 	end
 
 	-- after a create, the next 7 tokens must contain 'script' in order to be a proper script
@@ -261,32 +262,56 @@ function isScript(tokenlist, strt)
 		else
 			if(string.find(tokenlist[i], ';')) then
 				output('found semicolon before "SCRIPT"-keyword --> no script')
-				return false, 'NONE', '', ''
+				return stmtType, 'NONE', '', ''
 			end
-			output('search for "SCRIPT" in '.. sqlparsing.normalize(tokenlist[i]))
-			if (sqlparsing.normalize(tokenlist[i]) == "SCRIPT") then
+			output('search for "SCRIPT" or "FUNCTION" in '.. sqlparsing.normalize(tokenlist[i]))
+			tok = sqlparsing.normalize(tokenlist[i]) 
+			if (tok == "SCRIPT" or tok == "FUNCTION") then
+				stmtType = tok
 				-- find token containing script name
 				name_search_pos = i + 1
 				while( (not sqlparsing.isidentifier(tokenlist[name_search_pos])) and name_search_pos < #tokenlist) do
 					name_search_pos = name_search_pos + 1
 				end
 				scriptName = tokenlist[name_search_pos]
-				return true, scriptType, scriptName, scriptComment
+				return stmtType, scriptType, scriptName, scriptComment
 			end
 		end
 	i = i +1
 	end -- end while-loop
-	return false, 'NONE', '', ''
+	return stmtType, 'NONE', '', ''
 
 end
 
 ---------------------------------------------------------------------------------
+-- get rid of whitespaces and tabs
+-- then check if remaining token start with a newline
+function starts_with_newline(token)
+	t = string.gsub(token, ' ', '')
+	t = string.gsub(t, '	', '')
+	t = string.gsub(t, '\n+', '\n')
 
+	nl = '\n'
+	return t:sub(1, #nl) == nl
+end
+
+-- check if last token is a newline
+function ends_with_newline(token)
+	nl = '\n'
+   return token:sub(-#nl) == nl
+end
+
+---------------------------------------------------------------------------------
 -- returns token number of '/' if tokenstring contains newline followed by '/'
 function findScriptEnd(tokenlist, startToken)
 	for i = startToken + 1, #tokenlist do
-		if (string.find(tokenlist[i-1], '\n') ~= nil and tokenlist[i] == '/') or tokenlist[i] == '\n/\n' then
-			return i
+		if (ends_with_newline(tokenlist[i-1]) and tokenlist[i] == '/') or tokenlist[i] == '\n/\n' then
+			-- check if the slash is really the end of the script. this is the case if the slash is either
+			-- the last token or there are only spaces, tabs and one newline in the next one
+			
+			if(i+1 > #tokenlist or (i+1 <= #tokenlist and starts_with_newline(tokenlist[i+1]))) then
+				return i
+			end
 		end
 	end
 	return nil
@@ -343,6 +368,8 @@ return new_tokenlist
 end
 
 ---------------------------------------------------------------------------------
+-- returns a table containing an entry for each statement of script file, each row consists of:
+-- stmt, stmtType, scriptName, scriptComment
 function getStatements(script_file)
 	statements = {}
 
@@ -368,8 +395,8 @@ function getStatements(script_file)
 	while startTokenNr <= #tokenlist do
 		
 		-- check if the next statement is a script
-		stmtIsScript, scriptType, scriptName, scriptComment = isScript(tokenlist, startTokenNr)
-		if (stmtIsScript) then
+		stmtType, scriptType, scriptName, scriptComment = getStmtType(tokenlist, startTokenNr)
+		if (isScriptOrFunction(stmtType)) then
 			output('---> is script. Search for / starting at '.. startTokenNr)
 			-- check whether token before / is a newline, if not, it's no proper script end
 			endTokenNr = findScriptEnd(tokenlist, startTokenNr)
@@ -393,59 +420,43 @@ function getStatements(script_file)
 
 		stmt = {unpack(tokenlist, startTokenNr, endTokenNr)}
 		stmt = table.concat(stmt, "")
-		table.insert(statements, {stmt, stmtIsScript, scriptName, scriptComment})
+		table.insert(statements, {stmt, stmtType, scriptName, scriptComment})
 		startTokenNr = endTokenNr  + 1
 
 	end
 	return statements
 end
 
-
-
--- extracted from actual script into function to be able to switch quickly between behaviours
-function execute_scripts_only(script_statements)
-	info = {}
-	for j = 1, #script_statements do
-		stmt = script_statements[j][1]
-		stmt_isScript = script_statements[j][2]
-		executed_this_stmt = ''
-	
-		if ( stmt_isScript) then
-			stmt_suc, stmt_res = pquery(stmt)
-			if stmt_suc then 
-				executed_this_stmt = 'YES'
-			else
-				executed_this_stmt = 'FAILED: '.. stmt_res.error_message
-			end
-		end
-	
-		table.insert(info,{stmt , stmt_isScript, executed_this_stmt})
-	end -- end for-loop
-	return info
+-- check whether input text is SCRIPT or FUNCTION
+function isScriptOrFunction(stmt_type)
+	if(stmt_type == 'SCRIPT' or stmt_type == 'FUNCTION') then
+		return true
+	else
+		return false
+	end
 end
 
--- executes all statements before first script and adds statements after script as a comment to the script
-function execute_scripts_with_comments(script_statements)
+-- executes all statements contained in script_statements ahead of first script 
+-- and adds statements contained in script_statements after script as a comment to the script
+function execute_scripts_with_comments(filename, script_statements)
+	
 	info = {}
-
 	execute_this = true
 	script_name = ''
-	comments = ''
-
 
 ----------------
 	-- script_statements[j][2] contains: stmt_is_script
 	-- all statemtns before first script: put execute flag
 	j = 1
-	while (j <= #script_statements and  script_statements[j][2] == false) do
-		stmt = script_statements[j][1]
-		stmt_isScript = script_statements[j][2]
-		stmt_name = script_statements[j][3]
+	while (j <= #script_statements and  (isScriptOrFunction(script_statements[j][2]) == false)) do
+		stmt 				= script_statements[j][1]
+		stmt_type 			= script_statements[j][2]
+		stmt_name 			= script_statements[j][3]
 
 		execute_this = true
 		add_as_comment = ''
 		executed = ''
-		table.insert(info, {stmt, stmt_isScript, stmt_name, execute_this, add_as_comment, executed})
+		table.insert(info, {filename, stmt_name, stmt, stmt_type, execute_this, add_as_comment, executed})
 
 		j = j +1
 	end
@@ -453,15 +464,15 @@ function execute_scripts_with_comments(script_statements)
 	-- this part is executed after for all the scripts
 	while (j <= #script_statements) do
 
-		stmt = script_statements[j][1]
-		stmt_isScript = script_statements[j][2]
-		stmt_name = script_statements[j][3]
-		add_as_comment = script_statements[j][4]
+		stmt 			= script_statements[j][1]
+		stmt_type 		= script_statements[j][2]
+		stmt_name 		= script_statements[j][3]
+		add_as_comment 	= script_statements[j][4]
 
 		execute_this = false
 		executed = ''
 
-		if (stmt_isScript) then
+		if ( isScriptOrFunction(stmt_type)) then
 			execute_this = true
 
 			-- collect all the comments, this are all statements where is_script is false
@@ -473,18 +484,18 @@ function execute_scripts_with_comments(script_statements)
 				c = c + 1
 			end
 		end
-		table.insert(info, {stmt, stmt_isScript, stmt_name ,execute_this, add_as_comment, executed})
+		table.insert(info, {filename, stmt_name, stmt, stmt_type, execute_this, add_as_comment, executed})
 		j = j +1
 	end
 
-	-- for-loop to actually execute the statements collected in info-table
 
+	-- for-loop to actually execute the statements collected in info-table
 	for j = 1, #info do
-		stmt = info[j][1]
-		stmt_isScript = info[j][2]
-		stmt_name = info[j][3]
-		execute_this = info[j][4]
-		add_as_comment = info[j][5]
+		stmt_name 		= info[j][2]
+		stmt 			= info[j][3]
+		stmt_type	 	= info[j][4]
+		execute_this	= info[j][5]
+		add_as_comment 	= info[j][6]
 		executed_this_stmt = ''
 	
 		if ( execute_this) then
@@ -497,7 +508,7 @@ function execute_scripts_with_comments(script_statements)
 		end
 
 		if (add_as_comment ~= '') then
-			stmt_suc, stmt_res = pquery([[comment on script ::s is :c]], {s=stmt_name, c=add_as_comment})
+			stmt_suc, stmt_res = pquery([[comment on ]]..stmt_type..[[ ::s is :c]], {s=stmt_name, c=add_as_comment})
 			if stmt_suc then
 				executed_this_stmt = executed_this_stmt ..' , and commented'
 			else
@@ -505,7 +516,7 @@ function execute_scripts_with_comments(script_statements)
 			end
 		end
 
-		info[j][6] = executed_this_stmt
+		info[j][7] = executed_this_stmt
 	end -- end for-loop
 
 	return info
@@ -515,8 +526,8 @@ function string.startswith(String,Start)
    return string.sub(String,1,string.len(Start))==Start
 end
 
--- append table t2 to t1
-function extendTable(t1,t2)
+-- append rows of table t2 to t1
+function appendTable(t1,t2)
     for i=1,#t2 do
         t1[#t1+1] = t2[i]
     end
@@ -575,12 +586,10 @@ for i = 1,#res do
 
 		script_statements = getStatements(content)
 
-		-- new_info = execute_scripts_only(script_statements)
-		
+		new_info = execute_scripts_with_comments(filename, script_statements)
+		info_detailed = appendTable(info_detailed, new_info)
 
-		new_info = execute_scripts_with_comments(script_statements)
-		info_detailed = extendTable(info_detailed, new_info)
-		table.insert(info_out,{repository, filename, 'Executed'} )
+		--table.insert(info_out,{repository, filename, 'Executed'} )
 
 	end -- end if
 end -- end outer for-loop
@@ -590,7 +599,9 @@ end -- end outer for-loop
 -- depending on detail level, use exit(info_out, ...) or exit(info_detailed, ... )
 
 --exit(info_out, "Repo varchar(2000000), filename varchar (2000000), executed varchar(20000)")
-exit(info_detailed, "stmt varchar(2000000), stmt_is_script varchar(2000), stmt_name varchar (2000000), should_be_executed varchar(20000), comment_on_this varchar(20000), executed varchar(20000)")
+
+
+exit(info_detailed, "file_name varchar(2000000), stmt_name varchar(2000000), stmt varchar(2000000), stmt_type varchar(10), should_be_executed boolean, comment_on_this varchar(20000), executed varchar(20000)")
 
 /
 
