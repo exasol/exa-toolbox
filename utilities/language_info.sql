@@ -89,6 +89,35 @@ def run(ctx):
 /
 
 --/
+CREATE OR REPLACE PYTHON3 SCALAR SCRIPT EXA_toolbox.python3_info(all_details BOOLEAN) EMITS (key VARCHAR(200), val VARCHAR(100000)) AS
+
+import pkg_resources
+import pkgutil
+
+def run(ctx):
+    ctx.emit("exa.meta.script_language", exa.meta.script_language)
+    if ctx.all_details:
+        ctx.emit("sys.version",                       sys.version)
+        ctx.emit("sys.byteorder",                     sys.byteorder)
+       #ctx.emit("sys.copyright",                     sys.copyright)
+       #ctx.emit("sys.builtin_module_names",      str(sys.builtin_module_names))
+       #ctx.emit("sys.modules.keys",              str(sys.modules.keys()))
+        ctx.emit("sys.path",                      str(sys.path))
+        ctx.emit("sys.platform",                      sys.platform)
+        ctx.emit("sys.version_info.major",        str(sys.version_info.major))
+        ctx.emit("sys.version_info.minor",        str(sys.version_info.minor))
+        ctx.emit("sys.version_info.micro",        str(sys.version_info.micro))
+        ctx.emit("sys.version_info.releaselevel",     sys.version_info.releaselevel)
+        ctx.emit("sys.version_info.serial",       str(sys.version_info.serial))
+        ws = sorted([p.project_name + ' ' + p.version for p in pkg_resources.working_set], key=str.lower)
+        for p in ws:
+            ctx.emit("package", p)
+        ms = sorted([mo[1] for mo in pkgutil.iter_modules()], key=str.lower)
+        for m in ms:
+            ctx.emit("module", m)
+/
+
+--/
 CREATE OR REPLACE LUA SCALAR SCRIPT EXA_toolbox.lua_info(all_details BOOLEAN) EMITS (key VARCHAR(200), val VARCHAR(100000)) AS
 
 function run(ctx)
@@ -153,6 +182,7 @@ class JAVA_INFO {
 -- Examples:
 -- SELECT r_info(TRUE);
 -- SELECT python_info(TRUE);
+-- SELECT python3_info(TRUE);
 -- SELECT lua_info(TRUE);
 -- SELECT java_info(TRUE);
 
