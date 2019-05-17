@@ -1,10 +1,28 @@
-# Content
-* json_table.sql JSON data that is stored in EXASOL tables can be accessed through UDFs. This solution presents a generic Python UDF json_table to access field values in JSON documents through path expressions. See also https://www.exasol.com/support/browse/SOL-570
-* flatten_json.sql see description below
+# Table of Contents
 
+<!-- toc -->
 
-### JSON flattening script
-This folder contains the `flatten_json.sql` file which contains a Lua script that is used to flatten JSON strings found in a `VARCHAR` column of an Exasol table.
+- [JSON](#json)
+  * [JSON table script](#json-table-script)
+  * [JSON flattening script](#json-flattening-script)
+    + [How it works](#how-it-works)
+    + [Examples](#examples)
+    + [Behavior of the script](#behavior-of-the-script)
+    + [Limitations](#limitations)
+
+<!-- tocstop -->
+
+# JSON
+
+## JSON table script
+
+[json_table.sql](json_table.sql): JSON data that is stored in EXASOL tables can be accessed through UDFs. This solution presents a generic Python UDF json_table to access field values in JSON documents through path expressions.
+
+See also https://www.exasol.com/support/browse/SOL-570
+
+## JSON flattening script
+
+[flatten_json.sql](flatten_json.sql): This file contains a Lua script that is used to flatten JSON strings found in a `VARCHAR` column of an Exasol table.
 
 The script's goal is to flatten a nested JSON string to create columns matching the corresponding fields of the JSON object and insert the matching values into a result table.
 
@@ -30,7 +48,7 @@ The script parameters are :
 * A boolean value to specify if the arrays/lists found within the JSON strings should also be flattened
 * A integer value to specify the desired depth of the flattening, use `-1` if you want to completely flatten the JSON
 
-#### How it works
+### How it works
 The Lua script called `FLAT_JSON_TABLE` uses two Python UDFs to create/alter the result table and insert the data into this table.
 - The first is called `GET_COLUMNS` and is used to emit the column names and column types resulting from the flattening of the JSON strings found in the JSON column.
 - The second is called `GET_DATA` and is used to emit the values of the flattened dictionaries.
@@ -38,7 +56,7 @@ The Lua script called `FLAT_JSON_TABLE` uses two Python UDFs to create/alter the
 Both UDFs use the same Python functions (logic of the flattening) to flatten the JSONs. These functions are found in a "class" UDF called `FLATTEN_JSON`. The main Python function within this "class" is called `flatten_json`. This function takes as input one JSON string and returns a flat Python dictionary corresponding to the JSON string flattened to the desired depth.
 The two UDFs `GET_COLUMNS` and `GET_DATA` will call this function for each JSON string of the JSON column.
 
-#### Examples
+### Examples
 ```sql
 CREATE OR REPLACE TABLE json_table(json_column VARCHAR(2000000));
 
@@ -118,7 +136,7 @@ The results are the following table :
 |Hannah    | 3  | {"phone": "481-964-5622", "hobbies": ["tech", "movies", "football"], "city": "Paris"}     | Markson  |
 
 
-#### Behavior of the script
+### Behavior of the script
 The script deals with two types of JSON strings, and it deals with them differently.
 - The JSON string is of type `list`, this means the file is of the following structure: `[{...}, {...}, {...}]`.
   In this case, the script will create one row per subdictionary flattened. So one JSON value in the JSON column can create multiple rows. For the script to work, the subdictionaries (`{...}`) within the same list/JSON need to be of the same structure (have the same fields/keys).
@@ -127,9 +145,10 @@ The script deals with two types of JSON strings, and it deals with them differen
 
 For better understanding, you can find one example of each case in the `flatten_json.sql` file. 
 
-#### Limitations
+### Limitations
 If multiple JSON values in the JSON column have the same fields (keys) but the corresponding values are not always of the same datatype, the script will have already created a column with the first value and the matching datatype, so when trying to insert a value in the table with a different datatype, the script will break. 
 There is a workaround to avoid breaking the insertion of the data which is to convert all of the fields datatypes of the JSON values to strings. To do so you can find the following piece of code in the `flatten_json` function of the `flatten_json` UDF/class : 
+
 ```python
 def flatten_json(my_json, depth=-1, flatten_array=False):
     '''
