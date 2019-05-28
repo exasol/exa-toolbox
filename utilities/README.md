@@ -12,7 +12,9 @@
 
 # Utilities 
 
-## bucketfs_ls ([bucketfs_ls.sql](bucketfs_ls.sql))
+## bucketfs_ls
+([bucketfs_ls.sql](bucketfs_ls.sql))
+
 This UDF can be used to list the content (i.e. the folders and files) of a [BucketFS](https://docs.exasol.com/administration/on-premise/bucketfs/bucketfs.htm) bucket (or a folder inside it).
 
 Usage:
@@ -25,7 +27,9 @@ The UDF is calling Unix/Linux `ls -F` command and thus the usual wildcard charac
 
 [BuckerFS Explorer](https://github.com/exasol/bucketfs-explorer) is GUI application that allows not only to inspect the content of BucketFS, but also upload and delete files and change settings.
 
-## check_connectivity ([check_connectivity.sql](check_connectivity.sql))
+## check_connectivity
+([check_connectivity.sql](check_connectivity.sql))
+
 Use this UDF to check if a host and a specific port on that host is accessible. This can be useful when investigating issues e.g. during ETL/ELT processes when data needs to be imported from a remote database.
 
 Usage:
@@ -33,7 +37,9 @@ Usage:
 SELECT check_connectivity('oraclesrv1.company.com', '1521');
 ```
 
-## language_info ([language_info.sql](language_info.sql))
+## language_info
+([language_info.sql](language_info.sql))
+
 These UDFs list the available information of their langauge environment, including the name and &ndash; if available &ndash; the version of the libraries/modules/packages supplied with them. You can use these to check if the language version is compatible with your code, and if the libraries/modules/packages required by your code are available.
 
 All UDFs expect a single Boolean parameter. `TRUE` indicates to retrieve all available information, while `FALSE` only produces the language version. 
@@ -48,7 +54,9 @@ SELECT java_info(TRUE);
 ```
 NOTE: `python3_info()` is only available (out of the box) in Exasol 6.2 and later version. 
 
-## pub2slack ([pub2slack.sql](pub2slack.sql))
+## pub2slack
+([pub2slack.sql](pub2slack.sql))
+
 This feature allows you to publish messages to a Slack channel. This could be a useful functionality during ETL/ELT processes  when the execution encountered an error or during in-database analytics when something interesting or suspicios was detected.
 
 This functionality requires an initial setup and administrative maintenance afterwards.

@@ -9,10 +9,10 @@
 CREATE SCHEMA IF NOT EXISTS EXA_toolbox;
 
 --/
-CREATE OR REPLACE FUNCTION EXA_toolbox.dateadd(p_interval IN VARCHAR(10), p_interval_val IN NUMBER, p_date_exp IN TIMESTAMP)
+CREATE OR REPLACE FUNCTION EXA_toolbox.dateadd(p_interval IN VARCHAR(11), p_interval_val IN NUMBER, p_date_exp IN TIMESTAMP)
     RETURN TIMESTAMP IS
 
-    v_ucase_interval VARCHAR(10);
+    v_ucase_interval VARCHAR(11);
     v_date           TIMESTAMP;
     v_datestr        VARCHAR(30);
     v_result         TIMESTAMP;

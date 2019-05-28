@@ -9,6 +9,8 @@
     + [Examples](#examples)
     + [Behavior of the script](#behavior-of-the-script)
     + [Limitations](#limitations)
+  * [json_value](#json_value)
+  * [isjson](#isjson)
 
 <!-- tocstop -->
 
@@ -16,13 +18,17 @@
 
 ## JSON table script
 
-[json_table.sql](json_table.sql): JSON data that is stored in EXASOL tables can be accessed through UDFs. This solution presents a generic Python UDF json_table to access field values in JSON documents through path expressions.
+[json_table.sql](json_table.sql)
+
+JSON data that is stored in EXASOL tables can be accessed through UDFs. This solution presents a generic Python UDF json_table to access field values in JSON documents through path expressions.
 
 See also https://www.exasol.com/support/browse/SOL-570
 
 ## JSON flattening script
 
-[flatten_json.sql](flatten_json.sql): This file contains a Lua script that is used to flatten JSON strings found in a `VARCHAR` column of an Exasol table.
+[flatten_json.sql](flatten_json.sql)
+
+ This file contains a Lua script that is used to flatten JSON strings found in a `VARCHAR` column of an Exasol table.
 
 The script's goal is to flatten a nested JSON string to create columns matching the corresponding fields of the JSON object and insert the matching values into a result table.
 
@@ -160,3 +166,34 @@ def flatten_json(my_json, depth=-1, flatten_array=False):
 
 ```
 You just need to uncomment these lines and re-execute the `flatten_json.sql` file to replace the scripts.
+
+## json_value
+[json_value.sql](json_value.sql)
+
+This UDF returns a scalar value from a JSON document (as string). It uses a [JSONPath expression](https://goessner.net/articles/JsonPath/) to locate the value in the document.
+```sql
+json_value(json VARCHAR(2000000), json_path VARCHAR(2000000)) RETURNS VARCHAR(2000000)
+```
+
+Examples:
+```sql
+SELECT json_value('{"id":1,"first_name":"Mark","last_name":"Trenaman","info":{"phone":"573-411-0171","city":"Washington", "hobbies":["sport", "music", "reading"]}}', '$.id');`
+SELECT json_value('{"id":2,"first_name":"Lisa","last_name":"Kemer","info":{"phone":"601-112-0724","city":"Berlin", "hobbies":["dancing", "cooking"]}}', '$.info.hobbies');
+SELECT json_value('{"people": [{"name": "Naomi", "age": 35, "colour": "green"}, {"name": "Amos", "age": 24, "colour": ["red", "green", "blue"]}]}', '$.people.*.colour');
+```
+
+## isjson
+[isjson.sql](isjson.sql)
+
+This UDF tests whether a string contains valid JSON document.
+```sql
+isjson(json VARCHAR(2000000)) RETURNS BOOLEAN
+```
+
+Examples:
+```sql
+SELECT isjson('{"id":1,"first_name":"Mark","last_name":"Trenaman","info":{"phone":"573-411-0171","city":"Washington", "hobbies":["sport", "music", "reading"]}}');
+SELECT isjson('Just a simple string');
+SELECT isjson(NULL);
+```
+

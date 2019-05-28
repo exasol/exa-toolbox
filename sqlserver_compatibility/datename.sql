@@ -8,9 +8,9 @@
 CREATE SCHEMA IF NOT EXISTS EXA_toolbox;
 
 --/
-CREATE OR REPLACE FUNCTION EXA_toolbox.datename(p_part_expr IN VARCHAR(15), p_date_expr IN TIMESTAMP ) RETURN VARCHAR(30) IS
+CREATE OR REPLACE FUNCTION EXA_toolbox.datename(p_part_expr IN VARCHAR(11), p_date_expr IN TIMESTAMP ) RETURN VARCHAR(30) IS
 
-  v_part       VARCHAR(15);
+  v_part       VARCHAR(11);
   v_timestamp  TIMESTAMP;
   v_wkday      VARCHAR(10);
   v_year       VARCHAR( 4);

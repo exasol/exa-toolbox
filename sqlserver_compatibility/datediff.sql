@@ -9,11 +9,11 @@
 CREATE SCHEMA IF NOT EXISTS EXA_toolbox;
 
 --/
-CREATE OR REPLACE FUNCTION EXA_toolbox.datediff(p_datepart IN VARCHAR(20), p_start_date_expr IN TIMESTAMP, p_end_date_expr IN TIMESTAMP)
+CREATE OR REPLACE FUNCTION EXA_toolbox.datediff(p_datepart IN VARCHAR(11), p_start_date_expr IN TIMESTAMP, p_end_date_expr IN TIMESTAMP)
     RETURN NUMBER IS
 
     v_ret_value    NUMBER;
-    v_part         VARCHAR(15);
+    v_part         VARCHAR(11);
     v_start_ts_tz  TIMESTAMP ;
     v_end_ts_tz    TIMESTAMP;
     v_start_date   DATE;

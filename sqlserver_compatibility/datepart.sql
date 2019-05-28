@@ -8,9 +8,9 @@
 CREATE SCHEMA IF NOT EXISTS EXA_toolbox;
 
 --/
-CREATE OR REPLACE FUNCTION EXA_toolbox.datepart(p_part_expr IN VARCHAR(15), p_date_expr IN TIMESTAMP) RETURN NUMBER IS
+CREATE OR REPLACE FUNCTION EXA_toolbox.datepart(p_part_expr IN VARCHAR(11), p_date_expr IN TIMESTAMP) RETURN NUMBER IS
 
-    v_part      VARCHAR(15);
+    v_part      VARCHAR(11);
     v_timestamp TIMESTAMP;
     v_wkday     VARCHAR(10);
     v_year      VARCHAR(4);
@@ -44,7 +44,7 @@ BEGIN
 END datepart;
 /
 
--- Examples:
+-- Example:
 -- SELECT datepart('YEAR', SYSTIMESTAMP);
 
 -- EOF
