@@ -177,7 +177,7 @@ json_value(json VARCHAR(2000000), json_path VARCHAR(2000000)) RETURNS VARCHAR(20
 
 Examples:
 ```sql
-SELECT json_value('{"id":1,"first_name":"Mark","last_name":"Trenaman","info":{"phone":"573-411-0171","city":"Washington", "hobbies":["sport", "music", "reading"]}}', '$.id');`
+SELECT json_value('{"id":1,"first_name":"Mark","last_name":"Trenaman","info":{"phone":"573-411-0171","city":"Washington", "hobbies":["sport", "music", "reading"]}}', '$.id');
 SELECT json_value('{"id":2,"first_name":"Lisa","last_name":"Kemer","info":{"phone":"601-112-0724","city":"Berlin", "hobbies":["dancing", "cooking"]}}', '$.info.hobbies');
 SELECT json_value('{"people": [{"name": "Naomi", "age": 35, "colour": "green"}, {"name": "Amos", "age": 24, "colour": ["red", "green", "blue"]}]}', '$.people.*.colour');
 ```
