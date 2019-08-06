@@ -1,5 +1,5 @@
 import requests
-from utilities.extension_downloading.ReleaseLinkExtractor import ReleaseLinkExtractor
+from ReleaseLinkExtractor import ReleaseLinkExtractor
 
 
 class ContainerFileUploader:
