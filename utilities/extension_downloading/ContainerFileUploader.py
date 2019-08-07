@@ -3,8 +3,7 @@ from ReleaseLinkExtractor import ReleaseLinkExtractor
 
 
 class ContainerFileUploader:
-    def __init__(self, script_holder_schema_name, release_name, git_hub_api_link):
-        self.script_holder_schema_name = script_holder_schema_name
+    def __init__(self, release_name, git_hub_api_link):
         self.release_name = release_name
         self.git_hub_api_link = git_hub_api_link
 
