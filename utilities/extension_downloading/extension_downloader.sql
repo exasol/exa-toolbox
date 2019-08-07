@@ -7,8 +7,13 @@
 
 CREATE SCHEMA IF NOT EXISTS EXA_toolbox;
 
+CREATE OR REPLACE CONNECTION BUCKET_CONNECTION TO 'http://w:<writing password>@<host>:<port>/<bucket name>/<uploading file name>';
+
+-- Example:
+-- CREATE OR REPLACE CONNECTION BUCKET_CONNECTION TO 'http://w:password@localhost:2580/test/test.tar.gz';
+
 --/
-CREATE OR REPLACE PYTHON SET SCRIPT EXA_toolbox.upload_to_bucket_with_link(file_to_download_name VARCHAR(1000), github_user VARCHAR(1000), repository_name VARCHAR(1000), release_name VARCHAR(1000), upload_url VARCHAR(1000))
+CREATE OR REPLACE PYTHON SET SCRIPT EXA_toolbox.upload_to_bucket_with_link(file_to_download_name VARCHAR(1000), github_user VARCHAR(1000), repository_name VARCHAR(1000), release_name VARCHAR(1000))
 EMITS (outputs VARCHAR(20000)) AS
 import requests
 
@@ -27,13 +32,14 @@ def run(ctx):
 
         from ContainerFileUploader import ContainerFileUploader
         file_uploader = ContainerFileUploader(ctx.file_to_download_name, ctx.github_user, ctx.repository_name, ctx.release_name)
-        file_uploader.upload(ctx.upload_url)
+        upload_url =  exa.get_connection("BUCKET_CONNECTION").address
+        file_uploader.upload(upload_url)
 /
 
 -- How to run the script:
--- SELECT upload_to_bucket_with_link('<name of the file to upload from github>', '<name of the user holding the repository>', '<name of the repository>', <name of the release>, '<bucket address for uploading>');
+-- SELECT upload_to_bucket_with_link('<name of the file to upload from github>', '<name of the user holding the repository>', '<name of the repository>', '<name of the release>');
 
 -- Example:
--- SELECT upload_to_bucket_with_link('python3-ds-EXASOL-6.1.0', 'exasol', 'script-languages', 'latest', 'http://w:writepassword@localhost:2580/test/test.tar.gz');
+-- SELECT upload_to_bucket_with_link('python3-ds-EXASOL-6.1.0', 'exasol', 'script-languages', 'latest');
 
 -- EOF
