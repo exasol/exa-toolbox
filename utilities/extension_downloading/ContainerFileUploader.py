@@ -27,10 +27,10 @@ class ContainerFileUploader:
         return connection_first_part + username + ':' + password + '@' + split_url[1] + '/' + self.file_to_download_name
 
     def __extract_download_url(self):
-        github_api_link = self.__construct_github_api_link()
+        github_api_link = self.__build_github_api_link()
         release_link_extractor = ReleaseLinkExtractor(github_api_link)
         download_url = release_link_extractor.get_link_by_release_name(self.file_to_download_name)
         return download_url
 
-    def __construct_github_api_link(self):
-        return "https://api.github.com/repos/" + self.github_user + "/" + self.repository_name + "/releases/" + self.release_name + ""
+    def __build_github_api_link(self):
+        return "https://api.github.com/repos/" + self.github_user + "/" + self.repository_name + "/releases/" + self.release_name
