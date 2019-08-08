@@ -9,14 +9,22 @@ class ContainerFileUploader:
         self.repository_name = repository_name
         self.release_name = release_name
 
-    def upload(self, upload_url):
+    def upload(self, address, username, password):
         """
         This method uploads the GitHub release into a selected Exasol bucket.
-        :param upload_url: URL for uploading a file in format http://w:<writing password>@<host>:<port>/<bucket name>/<file name>
+        :param address: address in the format 'http://<host>:<port>/<bucket name>'
+        :param username: bucket writing username
+        :param password: bucket writing password
         """
         download_url = self.__extract_download_url()
         r_download = requests.get(download_url, stream=True)
+        upload_url = self.__build_upload_url(address, username, password)
         requests.put(upload_url, data=r_download.iter_content(10 * 1024))
+
+    def __build_upload_url(self, address, username, password):
+        connection_first_part = 'http://'
+        split_url = address.split(connection_first_part, 1)
+        return connection_first_part + username + ':' + password + '@' + split_url[1] + '/' + self.file_to_download_name
 
     def __extract_download_url(self):
         github_api_link = self.__construct_github_api_link()
