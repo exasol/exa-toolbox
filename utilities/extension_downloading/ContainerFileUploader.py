@@ -19,7 +19,7 @@ class ContainerFileUploader:
         """
         download_url = self.__extract_download_url()
         r_download = requests.get(download_url, stream=True)
-        upload_url = self.__build_upload_url(address, username, password, )
+        upload_url = self.__build_upload_url(address, username, password)
         requests.put(upload_url, data=r_download.iter_content(10 * 1024))
 
     def __build_upload_url(self, address, username, password):
