@@ -41,5 +41,6 @@ The EXA-toolbox is a collection of useful scripts and views that you can add to 
 - [Utilities](utilities/README.md#utilities)
   * [bucketfs_ls](utilities/README.md#bucketfs_ls)
   * [check_connectivity](utilities/README.md#check_connectivity)
+  * [upload_github_release_file_to_bucketfs](utilities/README.md#upload_github_release_file_to_bucketfs)
   * [language_info](utilities/README.md#language_info)
   * [pub2slack](utilities/README.md#pub2slack)

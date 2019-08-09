@@ -5,6 +5,7 @@
 - [Utilities](#utilities)
   * [bucketfs_ls](#bucketfs_ls)
   * [check_connectivity](#check_connectivity)
+  * [upload_github_release_file_to_bucketfs](#upload_github_release_file_to_bucketfs)
   * [language_info](#language_info)
   * [pub2slack](#pub2slack)
 
@@ -23,7 +24,7 @@ SELECT bucketfs_ls('/buckets/bfsdefault');
 ```
 NOTE: The root of BucketFS is `/buckets/bfsdefault`.
 
-The UDF is calling Unix/Linux `ls -F` command and thus the usual wildcard characters can be used in the path.
+The UDF is calling Unix/Linux `ls -F` command and thus the usual wildcard characters can be used into the path.
 
 [BuckerFS Explorer](https://github.com/exasol/bucketfs-explorer) is GUI application that allows not only to inspect the content of BucketFS, but also upload and delete files and change settings.
 
@@ -36,6 +37,20 @@ Usage:
 ```sql
 SELECT check_connectivity('oraclesrv1.company.com', '1521');
 ```
+
+## upload_github_release_file_to_bucketfs
+([upload_github_release_file_to_bucketfs.sql](upload_github_release_file_to_bucketfs.sql))
+
+This UDF can be used for uploading a file from a Github release page to a selected bucket. 
+
+You need to create a connection with an url of the bucket and credentials for a writing access and use a name of the connection as an argument in the UDF. 
+
+Usage:
+```sql
+SELECT upload_github_release_file_to_bucketfs('BUCKET_CONNECTION', 'python3-ds-EXASOL-6.1.0', 'exasol', 'script-languages', 'latest', 'path/in/bucket/');
+```
+NOTE:
+* If you don't want to provide a path inside a bucket, please use an empty string: ''; 
 
 ## language_info
 ([language_info.sql](language_info.sql))
