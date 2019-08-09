@@ -25,9 +25,12 @@ class ContainerFileUploader:
     def __build_upload_url(self, address, username, password):
         connection_first_part = 'http://'
         split_url = address.split(connection_first_part, 1)
-        return "{connection_first_part}{username}:{password}@{url}/{path_inside_bucket}{file_to_download_name}".format(
-            connection_first_part=connection_first_part, username=username, password=password, url=split_url[1],
-            path_inside_bucket=self.path_inside_bucket, file_to_download_name=self.file_to_download_name)
+        upload_url = "{connection_first_part}{username}:{password}@{url}/".format(
+            connection_first_part=connection_first_part, username=username, password=password, url=split_url[1])
+        if self.path_inside_bucket:
+            upload_url += self.path_inside_bucket
+        upload_url += self.file_to_download_name
+        return upload_url
 
     def __extract_download_url(self):
         github_api_link = self.__build_github_api_link()
