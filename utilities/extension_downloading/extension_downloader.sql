@@ -31,12 +31,13 @@ def run(ctx):
 /
 
 -- How to run the script:
--- SELECT upload_to_bucket_with_link('name of the connection', '<name of the file to upload from github>', '<name of the user holding the repository>', '<name of the repository>', '<name of the release>');
+-- CREATE SCHEMA IF NOT EXISTS <schema name>;
+-- CREATE OR REPLACE CONNECTION BUCKET_CONNECTION TO 'http://<host>:<port>/<bucket name>' USER 'w' IDENTIFIED BY '<writing password>';
+-- CREATE OR REPLACE PYTHON SET SCRIPT... (see above);
+-- SELECT upload_to_bucket_with_link('name of the connection', '<name of the file to upload from github>', '<name of the user holding the repository>', '<name of the repository>', '<name of the release>', '<path inside the bucket (you can put an empty string here if you don't need the path)>');
 
 -- Example:
-
--- CREATE OR REPLACE CONNECTION BUCKET_CONNECTION TO 'http://<host>:<port>/<bucket name>' USER 'w' IDENTIFIED BY '<writing password>';
-
+-- CREATE OR REPLACE CONNECTION BUCKET_CONNECTION TO 'http://localhost:1234/test' USER 'w' IDENTIFIED BY 'password';
 -- SELECT upload_to_bucket_with_link('BUCKET_CONNECTION', 'python3-ds-EXASOL-6.1.0', 'exasol', 'script-languages', 'latest', 'path/in/bucket/');
 
 -- EOF
