@@ -37,6 +37,6 @@ def run(ctx):
 
 -- CREATE OR REPLACE CONNECTION BUCKET_CONNECTION TO 'http://<host>:<port>/<bucket name>' USER 'w' IDENTIFIED BY '<writing password>';
 
--- SELECT upload_to_bucket_with_link('BUCKET_CONNECTION', 'python3-ds-EXASOL-6.1.0', 'exasol', 'script-languages', 'latest');
+-- SELECT upload_to_bucket_with_link('BUCKET_CONNECTION', 'python3-ds-EXASOL-6.1.0', 'exasol', 'script-languages', 'latest', 'path/in/bucket/');
 
 -- EOF
