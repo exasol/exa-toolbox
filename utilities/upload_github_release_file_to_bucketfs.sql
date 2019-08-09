@@ -7,7 +7,7 @@
 CREATE SCHEMA IF NOT EXISTS EXA_toolbox;
 
 --/
-CREATE OR REPLACE PYTHON SET SCRIPT EXA_toolbox.upload_to_bucket_with_link(connection_name VARCHAR(1000), file_to_download_name VARCHAR(1000), github_user VARCHAR(1000), repository_name VARCHAR(1000), release_name VARCHAR(1000), path_inside_bucket VARCHAR(1000))
+CREATE OR REPLACE PYTHON SET SCRIPT EXA_toolbox.upload_github_release_file_to_bucketfs(connection_name VARCHAR(1000), file_to_download_name VARCHAR(1000), github_user VARCHAR(1000), repository_name VARCHAR(1000), release_name VARCHAR(1000), path_inside_bucket VARCHAR(1000))
 EMITS (outputs VARCHAR(20000)) AS
 import requests
 import sys
@@ -34,10 +34,10 @@ def run(ctx):
 -- CREATE SCHEMA IF NOT EXISTS <schema name>;
 -- CREATE OR REPLACE CONNECTION BUCKET_CONNECTION TO 'http://<host>:<port>/<bucket name>' USER 'w' IDENTIFIED BY '<writing password>';
 -- CREATE OR REPLACE PYTHON SET SCRIPT... (see above);
--- SELECT upload_to_bucket_with_link('name of the connection', '<name of the file to upload from github>', '<name of the user holding the repository>', '<name of the repository>', '<name of the release>', '<path inside the bucket (you can put an empty string here if you don't need the path)>');
+-- SELECT upload_github_release_file_to_bucketfs('name of the connection', '<name of the file to upload from github>', '<name of the user holding the repository>', '<name of the repository>', '<name of the release>', '<path inside the bucket (you can put an empty string here if you don't need the path)>');
 
 -- Example:
 -- CREATE OR REPLACE CONNECTION BUCKET_CONNECTION TO 'http://localhost:1234/test' USER 'w' IDENTIFIED BY 'password';
--- SELECT upload_to_bucket_with_link('BUCKET_CONNECTION', 'python3-ds-EXASOL-6.1.0', 'exasol', 'script-languages', 'latest', 'path/in/bucket/');
+-- SELECT upload_github_release_file_to_bucketfs('BUCKET_CONNECTION', 'python3-ds-EXASOL-6.1.0', 'exasol', 'script-languages', 'latest', 'path/in/bucket/');
 
 -- EOF
