@@ -5,6 +5,7 @@
 - [Utilities](#utilities)
   * [bucketfs_ls](#bucketfs_ls)
   * [check_connectivity](#check_connectivity)
+  * [extension_downloader](#extension_downloader)
   * [language_info](#language_info)
   * [pub2slack](#pub2slack)
 
@@ -36,6 +37,20 @@ Usage:
 ```sql
 SELECT check_connectivity('oraclesrv1.company.com', '1521');
 ```
+
+## extension_downloader
+([extension_downloader.sql](extension_downloader.sql))
+
+This UDF can be used for uploading a file from a Github release page to a selected bucket. 
+
+You need to create a connection with an url of the bucket and credentials for a writing access and use a name of the connection as an argument in the UDF. 
+
+Usage:
+```sql
+SELECT upload_to_bucket_with_link('BUCKET_CONNECTION', 'python3-ds-EXASOL-6.1.0', 'exasol', 'script-languages', 'latest', 'path/in/bucket/');
+```
+NOTE:
+* If you don't want to provide a path inside a bucket, please use an empty string: ''; 
 
 ## language_info
 ([language_info.sql](language_info.sql))

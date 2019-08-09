@@ -19,12 +19,12 @@ def download_python_file(file_name):
                 f.write(r.content)
 
 def run(ctx):
-        download_python_file('ContainerFileUploader.py')
+        download_python_file('GithubReleaseFileBucketFSUploader.py')
         download_python_file('ReleaseLinkExtractor.py')
         sys.path.append('/tmp')
 
-        from ContainerFileUploader import ContainerFileUploader
-        file_uploader = ContainerFileUploader(ctx.file_to_download_name, ctx.github_user, ctx.repository_name, ctx.release_name, ctx.path_inside_bucket)
+        from GithubReleaseFileBucketFSUploader import GithubReleaseFileBucketFSUploader
+        file_uploader = GithubReleaseFileBucketFSUploader(ctx.file_to_download_name, ctx.github_user, ctx.repository_name, ctx.release_name, ctx.path_inside_bucket)
 
         bucket_connection_string = exa.get_connection(ctx.connection_name)
         file_uploader.upload(bucket_connection_string.address, bucket_connection_string.user, bucket_connection_string.password)

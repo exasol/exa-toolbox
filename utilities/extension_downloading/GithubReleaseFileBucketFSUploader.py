@@ -2,7 +2,7 @@ import requests
 from ReleaseLinkExtractor import ReleaseLinkExtractor
 
 
-class ContainerFileUploader:
+class GithubReleaseFileBucketFSUploader:
     def __init__(self, file_to_download_name, github_user, repository_name, release_name, path_inside_bucket):
         self.file_to_download_name = file_to_download_name
         self.github_user = github_user
