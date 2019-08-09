@@ -24,7 +24,7 @@ SELECT bucketfs_ls('/buckets/bfsdefault');
 ```
 NOTE: The root of BucketFS is `/buckets/bfsdefault`.
 
-The UDF is calling Unix/Linux `ls -F` command and thus the usual wildcard characters can be used in the path.
+The UDF is calling Unix/Linux `ls -F` command and thus the usual wildcard characters can be used into the path.
 
 [BuckerFS Explorer](https://github.com/exasol/bucketfs-explorer) is GUI application that allows not only to inspect the content of BucketFS, but also upload and delete files and change settings.
 
