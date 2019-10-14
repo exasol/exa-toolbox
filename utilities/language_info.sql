@@ -61,7 +61,7 @@ run <- function(ctx) {
 
 --/
 CREATE OR REPLACE PYTHON SCALAR SCRIPT EXA_toolbox.python_info(all_details BOOLEAN) EMITS (key VARCHAR(200), val VARCHAR(100000)) AS
-
+import locale
 import pkg_resources
 import pkgutil
 
@@ -80,7 +80,7 @@ def run(ctx):
         ctx.emit("sys.version_info.micro",        str(sys.version_info.micro))
         ctx.emit("sys.version_info.releaselevel",     sys.version_info.releaselevel)
         ctx.emit("sys.version_info.serial",       str(sys.version_info.serial))
-        ws = sorted([p.project_name + ' ' + p.version for p in pkg_resources.working_set], key=str.lower)
+        ws = sorted([p.project_name + ' ' + p.version for p in pkg_resources.working_set], cmp=locale.strcoll)
         for p in ws:
             ctx.emit("package", p)
         ms = sorted([mo[1] for mo in pkgutil.iter_modules()], key=str.lower)
