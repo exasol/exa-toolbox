@@ -8,6 +8,7 @@
   * [upload_github_release_file_to_bucketfs](#upload_github_release_file_to_bucketfs)
   * [language_info](#language_info)
   * [pub2slack](#pub2slack)
+  * [database_warmup] (#database_warmup)
 
 <!-- tocstop -->
 
