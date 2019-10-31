@@ -99,3 +99,15 @@ EXECUTE SCRIPT pub2slack('general','Test');
 ```
  * Make sure that your endusers have `EXECUTE` privilege on `pub2slack()` and no other privileges are provided (e.g. any kind of privilege on the `pub2slack_channels` table).
  * `pub2slack()` is a wrapper Lua script to make the use of this functionality simple. It checks the validity of input parameters, access right to the channel; and it retrieves the webhook to call the inner Python UDF `pub2slackfn()` that provides the actual communication service. 
+
+
+
+## database_warmup
+
+
+Example script which uses Queries from the Auditing to warmup a Exasol database after e.g. system start / after ETL etc...
+
+Usage:
+```
+EXECUTE SCRIPT DB_WARMUP()
+```
