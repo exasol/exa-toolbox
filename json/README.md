@@ -10,6 +10,7 @@
     + [Behavior of the script](#behavior-of-the-script)
     + [Limitations](#limitations)
   * [json_value](#json_value)
+  * [json_value_python3](#json_value_python3)
   * [isjson](#isjson)
 
 <!-- tocstop -->
