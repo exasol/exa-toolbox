@@ -182,6 +182,19 @@ SELECT json_value('{"id":2,"first_name":"Lisa","last_name":"Kemer","info":{"phon
 SELECT json_value('{"people": [{"name": "Naomi", "age": 35, "colour": "green"}, {"name": "Amos", "age": 24, "colour": ["red", "green", "blue"]}]}', '$.people.*.colour');
 ```
 
+## json_value_python3
+[json_value_python3.sql](json_value_python3.sql)
+```sql
+json_value(json VARCHAR(2000000), json_path VARCHAR(2000000)) RETURNS VARCHAR(2000000)
+```
+
+This UDF is a Python 3 port from json_value. It returns a scalar value from a JSON document (as string). It uses a [JSONPath expression](https://goessner.net/articles/JsonPath/) to locate the value in the document. Because of Python 2's laking support for UTF-8 encoding json_value was ported to Python 3 where UTF-8 is standard.
+
+Example:
+```sql
+SELECT json_value('{"id":1,"first_name":"Thaddäus","last_name":"Müller","info":{"phone":"573-411-0171","city":"Washington", "hobbies":["sport", "music", "reading"]}}', '$.id');
+```
+
 ## isjson
 [isjson.sql](isjson.sql)
 
