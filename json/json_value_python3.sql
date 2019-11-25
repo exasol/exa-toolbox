@@ -266,6 +266,10 @@ def run(ctx):
 
     if len(value) == 1:
         val = value[0]
+        
+        if not val:
+                return (None)
+        
         if type(val) is list or type(val) is dict:
             val = json.dumps(val, ensure_ascii=False)
         else:
