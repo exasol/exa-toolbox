@@ -70,4 +70,4 @@ end
 --output(like_all_any([[select * from retail.article where description like all('%in%', '%in%') and (description like any('%in%', '%in%') or description like all ('%b%','%c%'))]]))
 /
 
-execute script preprocessing.transformations() with output;
+--execute script preprocessing.transformations() with output;
