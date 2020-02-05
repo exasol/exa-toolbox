@@ -45,3 +45,6 @@ The EXA-toolbox is a collection of useful scripts and views that you can add to 
   * [language_info](utilities/README.md#language_info)
   * [pub2slack](utilities/README.md#pub2slack)
   * [database_warmup](utilities/README.md#database_warmup)
+- [Preprocessing](preprocessing)
+  * [Teradata](preprocessing/teradata)
+
