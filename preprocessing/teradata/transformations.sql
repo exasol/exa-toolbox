@@ -35,6 +35,7 @@ end
 
 function gather_key_tokens(tokens, argument_position)
  local exists_most_recent_identifier = sqlparsing.find(tokens, argument_position, false, false, sqlparsing.iswhitespaceorcomment, sqlparsing.isidentifier)
+ 
  local most_recent_identifier_pos
  if exists_most_recent_identifier then
         most_recent_identifier_pos = exists_most_recent_identifier[1]
@@ -42,8 +43,20 @@ function gather_key_tokens(tokens, argument_position)
         most_recent_identifier_pos = 1
  end
  
- local open_level = sqlparsing.find(tokens, most_recent_identifier_pos, true, false, sqlparsing.iswhitespaceorcomment,'(')[1]
- local close_level = sqlparsing.find(tokens, open_level, true, false, sqlparsing.iswhitespaceorcomment, ')')[1]
+ local open_level
+ if open_level then
+        open_level = sqlparsing.find(tokens, most_recent_identifier_pos, true, false, sqlparsing.iswhitespaceorcomment,'(')[1]
+ else
+        open_level = 1
+ end
+ 
+ local close_level
+ if close_level then
+        close_level = sqlparsing.find(tokens, open_level, true, false, sqlparsing.iswhitespaceorcomment, ')')[1]
+ else
+        close_level = #tokens
+ end
+ 
  return most_recent_identifier_pos, open_level, close_level
 end
 
@@ -130,6 +143,39 @@ end
 --output(index_to_locate([[SELECT INDEX(description, 'oma') as col1 FROM retail.article where INDEX(descripton, 'oma') > 0;]]))
 -----------
 
+
+function not_equal(sqltext)
+ local tokens = sqlparsing.tokenize(sqlparsing.normalize(sqltext))
+ local arg1 = {'NE'}
+ local arg1_replace = '<>'
+ local arg1_pos = sqlparsing.find(tokens, 1, true, false, sqlparsing.iswhitespaceorcomment, unpack(arg1))
+
+ local argument_position
+ local open_level
+ local close_level
+
+ if arg1_pos then
+        argument_position = arg1_pos[1]
+ else
+        return(sqltext)
+ end
+
+ local _, open_level, close_level = gather_key_tokens(tokens, argument_position)
+ 
+ for i = open_level, close_level do  
+        if sqlparsing.isidentifier(tokens[i]) and tokens[i] == 'NE' then
+                tokens[i] = arg1_replace
+        end
+ end
+ 
+ -- recursive call to replace every occurence
+ return index_to_locate(table.concat(tokens, ''))   -- Transformed SQL
+end
+-----------
+--Tests
+--output(not_equal([[select * from retail.article where product_class NE 1]]))
+--output(not_equal([[select * from retail.article where product_class NE 1 and product_class NE 0]]))
+-----------
 /
 
 execute script preprocessing.transformations() with output;
