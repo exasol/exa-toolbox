@@ -63,11 +63,21 @@ function like_all_any(sqltext, rec_depth)
  -- recursive call to replace every occurence
  return like_all_any(   table.concat(tokens, '', 1, argument_position - arg_length - 1)..       -- preceding SQL
                         table.concat(output_buffer,'')..                                        -- transformed SQL
-                        table.concat(tokens, '', close_level + 1))                              -- succeding SQL
+                        table.concat(tokens, '', close_level + 1))                              -- succeeding SQL
 end
+-----------
+--Tests
 --output(like_all_any([[SELECT * FROM retail.article WHERE description like any('%in%',/*some comment*/'%Mix%','%c%')]]))
 --output(like_all_any([[SELECT * FROM MYTABLE WHERE COL1 LIKE any('%a',/*some comment*/'%b%','c%') or col2 like all('%d',/*some other comment*/'%e%','f%')]], 1))
 --output(like_all_any([[select * from retail.article where description like all('%in%', '%in%') and (description like any('%in%', '%in%') or description like all ('%b%','%c%'))]]))
+-----------
+
+
+function index_to_instr()
+ 
+end
+
+
 /
 
 --execute script preprocessing.transformations() with output;
