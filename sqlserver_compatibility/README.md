@@ -3,19 +3,31 @@
 <!-- toc -->
 
 - [Microsoft SQL Server compatibility](#microsoft-sql-server-compatibility)
+  * [CONVERT_TO_CHAR](#convert_to_char)
   * [CONVERT_TO_DATE](#convert_to_date)
-  * [DATEADD](#DATEADD)
-  * [DATEDIFF](#DATEDIFF)
-  * [DATENAME](#DATENAME)
-  * [DATEPART](#DATEPART)
-  * [GETUTCDATE](#GETUTCDATE)
-  * [NEWID](#NEWID)
+  * [DATEADD](#dateadd)
+  * [DATEDIFF](#datediff)
+  * [DATENAME](#datename)
+  * [DATEPART](#datepart)
+  * [EOMONTH](#eomonth)
+  * [GETUTCDATE](#getutcdate)
+  * [NEWID](#newid)
+  * [PATINDEX](#patindex)
   * [JSON_VALUE](../json/README.md#json_value)
   * [ISJSON](../json/README.md#isjson)
 
 <!-- tocstop -->
 
 # Microsoft SQL Server compatibility 
+
+## CONVERT_TO_CHAR
+[convert_date_to_char.sql](convert_date_to_char.sql)
+
+ This function is a partial compatibility implementation of MS SQL Server's CONVERT function.
+ It converts a date to a string using the specified style.
+```sql
+CONVERT_TO_CHAR(p_expr IN TIMESTAMP, p_style IN NUMBER ) RETURN VARCHAR(50)
+```
 
 ## CONVERT_TO_DATE
 [convert_to_date.sql](convert_to_date.sql)
@@ -57,6 +69,15 @@ This function is a compatibility implementation of MS SQL Server's [DATEPART](ht
 DATEPART(datepart VARCHAR(11), date_expression TIMESTAMP) RETURN NUMBER
 ```
 
+## EOMONTH
+[eomonth.sql](eomonth.sql)
+
+This function is a compatibility implementation of MS SQL Server's EOMONTH function.
+It returns the last day of the month given.
+```sql
+EOMONTH(date_in IN TIMESTAMP) RETURN DATE
+```
+
 ## GETUTCDATE
 [getutcdate.sql](getutcdate.sql)
 
@@ -74,4 +95,15 @@ Note: As Exasol does not currently support UUID/GUID data type, `CHAR(36)` can b
 ```sql
 NEWID()
 ```
+
+## PATINDEX
+[patindex.sql](patindex.sql)
+
+This function is a partial compatibility implementation of MS SQL Server's PATINDEX function.
+It returns the startposition of the first occurence of a given pattern in a VARCHAR.
+    
+```sql
+PATINDEX(p_pattern IN VARCHAR2(4000), p_expr IN VARCHAR2(4000)) RETURN NUMBER
+```
+
 
