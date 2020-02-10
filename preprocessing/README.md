@@ -31,3 +31,6 @@ The Teradata preprocessor scripts currently allow the following translations:
 |LIKE ALL<br><pre lang="sql">``` [...] WHERE COL1 LIKE ALL('%house%', '%winter%')```</pre> | <pre lang="sql">```[...] WHERE (COL1 LIKE '%house%' AND COL1 LIKE '%winter%')```</pre> |
 | LIKE ANY<br><pre lang="sql">```[...] WHERE COL1 LIKE ANY('%house%', '%winter%')```</pre> | <pre lang="sql">```[...] WHERE (COL1 LIKE '%house%' OR COL1 LIKE '%winter%')```</pre> |
 | ALL/ANY Combinations<br><pre lang="sql">```[...] WHERE COL1 LIKE ALL('A', 'B') AND COL2 LIKE ANY('C', 'D')```</pre> | <pre lang="sql">```[...] WHERE (COL1 LIKE 'A' AND COL1 LIKE 'B') AND (COL2 LIKE 'C' OR 'D')```</pre> |
+| INDEX <br><pre lang="sql">```SELECT INDEX(column, 'winter') [...]```</pre> | <pre lang="sql">```[...] SELECT LOCATE('winter', column) [...]```</pre> |
+| NE <br><pre lang="sql">```[...] WHERE column NE 1```</pre> | <pre lang="sql">```[...] WHERE column <> 1```</pre> |
+| date AS FORMAT '...' <br><pre lang="sql">```SELECT CAST(CAST(date_point AS FORMAT 'YYYY-MM-DD') AS CHAR(10)) AS col1```</pre> | <pre lang="sql">```[...] SELECT to_char(date_point , 'YYYY-MM-DD') AS col1```</pre> |
