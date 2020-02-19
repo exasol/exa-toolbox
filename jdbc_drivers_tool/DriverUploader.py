@@ -19,19 +19,23 @@ def create_jdbc_driver_with_all_jars(server_proxy: str, path_to_the_jars_folder:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('arguments', type=str, nargs=5)
-    args = parser.parse_args().arguments
+    parser.add_argument('--bucketfsUrl', help='Url to connect to Exasol.')
+    parser.add_argument('--pathToDriver', help="Path to the driver'folder.")
+    parser.add_argument('--driverName', help='Name of the driver in the EXAoperations.')
+    parser.add_argument('--driverMainClass', help="Main class of the driver.")
+    parser.add_argument('--driverPrefix', help='Connection string prefix.')
+    args = parser.parse_args()
 
-    create_jdbc_driver_with_all_jars(args[0], args[1], args[2], args[3], args[4])
-
+    create_jdbc_driver_with_all_jars(args.bucketfsUrl, args.pathToDriver, args.driverName, args.driverMainClass,
+                                     args.driverPrefix)
 if __name__== "__main__":
     main()
 
 # How to use:
 
 # Download this file [1] and run the following command in a terminal:
-# python DriverUploading.py 'https://<read password>:<write password>@<host>:<port>/<cluster>/' '/path/to/the/driver/folder/' '<driver name>' '<driver main class> '<driver prefix>:'
+# python DriverUploading.py --bucketfsUrl 'https://<read password>:<write password>@<host>:<port>/<cluster>/' --pathToDriver '/path/to/the/driver/folder/' --driverName '<driver name>' --driverMainClass '<driver main class>' --driverPrefix '<driver prefix>:'
 # [1]: https://raw.githubusercontent.com/exasol/exa-toolbox/master/jdbc_drivers_tool/DriverUploader.py
 
 # For example:
-# python DriverUploading.py 'https://pass:pass@localhost:4433/cluster1/' '/home/jdbc drivers/SimbaJDBCDriverforGoogleBigQuery42_1.2.0.1000/' 'bigquery' 'com.simba.googlebigquery.jdbc42.Driver' 'jdbc:bigquery:'
+# python DriverUploading.py --bucketfsUrl 'https://pass:pass@localhost:4433/cluster1/' --pathToDriver '/home/jdbc drivers/SimbaJDBCDriverforGoogleBigQuery42_1.2.0.1000/' --driverName 'bigquery' --driverMainClass 'com.simba.googlebigquery.jdbc42.Driver' --driverPrefix 'jdbc:bigquery:'
