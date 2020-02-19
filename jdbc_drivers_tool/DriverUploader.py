@@ -1,8 +1,8 @@
 import glob
 import os
 import ssl
-import sys
 from xmlrpc.client import Binary, Server
+import argparse
 
 
 def create_jdbc_driver_with_all_jars(server_proxy: str, path_to_the_jars_folder: str,
@@ -17,19 +17,21 @@ def create_jdbc_driver_with_all_jars(server_proxy: str, path_to_the_jars_folder:
         jdbc.uploadFile(Binary(read), os.path.basename(filename))
     print("Uploaded successfully.")
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('arguments', type=str, nargs=5)
+    args = parser.parse_args().arguments
 
-server_proxy = sys.argv[1]
-path_to_the_jars_folder = sys.argv[2]
-jdbc_name = sys.argv[3]
-jdbc_main_class = sys.argv[4]
-jdbc_prefix = sys.argv[5]
+    create_jdbc_driver_with_all_jars(args[0], args[1], args[2], args[3], args[4])
 
-create_jdbc_driver_with_all_jars(server_proxy, path_to_the_jars_folder, jdbc_name, jdbc_main_class, jdbc_prefix)
+if __name__== "__main__":
+    main()
 
 # How to use:
 
-# Download this file and run the following command in a terminal:
+# Download this file [1] and run the following command in a terminal:
 # python DriverUploading.py 'https://<read password>:<write password>@<host>:<port>/<cluster>/' '/path/to/the/driver/folder/' '<driver name>' '<driver main class> '<driver prefix>:'
+# [1]: https://raw.githubusercontent.com/exasol/exa-toolbox/master/jdbc_drivers_tool/DriverUploader.py
 
 # For example:
 # python DriverUploading.py 'https://pass:pass@localhost:4433/cluster1/' '/home/jdbc drivers/SimbaJDBCDriverforGoogleBigQuery42_1.2.0.1000/' 'bigquery' 'com.simba.googlebigquery.jdbc42.Driver' 'jdbc:bigquery:'
