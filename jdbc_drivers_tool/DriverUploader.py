@@ -6,17 +6,6 @@ from xmlrpc.client import Binary, Server
 import argparse
 
 
-class Password(argparse.Action):
-    def __init__(self, option_strings, dest=None, nargs=0, default=None,
-                 required=True, type=None, metavar=None, help=None):
-        super(Password, self).__init__(option_strings=option_strings, dest=dest, nargs=nargs, default=default,
-                                       required=required, metavar=metavar, type=type, help=help)
-
-    def __call__(self, parser, args, values, option_string=None):
-        password = getpass()
-        setattr(args, self.dest, password)
-
-
 def create_jdbc_driver_with_all_jars(server_proxy: str, path_to_the_jars_folder: str,
                                      jdbc_name: str, jdbc_main_class: str, jdbc_prefix: str):
     srv = Server(server_proxy, context=ssl._create_unverified_context())
@@ -38,16 +27,18 @@ def main():
     parser.add_argument('--driverName', help='A name of the driver in the EXAoperations.')
     parser.add_argument('--driverMainClass', help="A main class of the driver.")
     parser.add_argument('--driverPrefix', help='A connection string prefix.')
-    parser.add_argument('--password', help='A password to login into EXAoperations.', action=Password)
     args = parser.parse_args()
 
     username = args.username
-    password = args.password
+    password = None
     host_port_and_cluster = args.hostPortAndCluster
     path_to_driver = args.pathToDriver
     driver_name = args.driverName
     driver_main_class = args.driverMainClass
     driver_prefix = args.driverPrefix
+
+    if password is None:
+        password = getpass()
     url = 'https://{username}:{password}@{host_port_and_cluster}'.format(username=username,
                                                                          password=password,
                                                                          host_port_and_cluster=host_port_and_cluster)
@@ -59,9 +50,12 @@ if __name__ == "__main__":
 
 # How to use:
 
-# Download this file [1] and run the following command in a terminal:
-# python DriverUploading.py --username '<username>' --hostPortAndCluster '<host>:<port>/<cluster>/' --pathToDriver '/path/to/the/driver/folder/' --driverName '<driver name>' --driverMainClass '<driver main class>' --driverPrefix '<driver prefix>:' --password
+# 1. Download this file [1]
+# 2. Run the following command in a terminal:
+#  python DriverUploading.py --username '<username>' --hostPortAndCluster '<host>:<port>/<cluster>/' --pathToDriver '/path/to/the/driver/folder/' --driverName '<driver name>' --driverMainClass '<driver main class>' --driverPrefix '<driver prefix>:'
+# 3. Input an EXAoperations password.
+
 # [1]: https://raw.githubusercontent.com/exasol/exa-toolbox/master/jdbc_drivers_tool/DriverUploader.py
 
 # For example:
-# python DriverUploading.py  --username 'user' --hostPortAndCluster 'localhost:4433/cluster1/' --pathToDriver '/home/jdbc drivers/SimbaJDBCDriverforGoogleBigQuery42_1.2.0.1000/' --driverName 'bigquery' --driverMainClass 'com.simba.googlebigquery.jdbc42.Driver' --driverPrefix 'jdbc:bigquery:' --password
+# python DriverUploading.py  --username 'user' --hostPortAndCluster 'localhost:4433/cluster1/' --pathToDriver '/home/jdbc drivers/SimbaJDBCDriverforGoogleBigQuery42_1.2.0.1000/' --driverName 'bigquery' --driverMainClass 'com.simba.googlebigquery.jdbc42.Driver' --driverPrefix 'jdbc:bigquery:'
