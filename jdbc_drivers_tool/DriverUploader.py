@@ -21,12 +21,13 @@ def create_jdbc_driver_with_all_jars(server_proxy: str, path_to_the_jars_folder:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--username', help='A username to login into EXAoperations.')
-    parser.add_argument('--hostPortAndCluster', help='An url to connect to Exasol in format <host>:<port>/<cluster>/.')
-    parser.add_argument('--pathToDriver', help="A path to the driver'folder.")
-    parser.add_argument('--driverName', help='A name of the driver in the EXAoperations.')
-    parser.add_argument('--driverMainClass', help="A main class of the driver.")
-    parser.add_argument('--driverPrefix', help='A connection string prefix.')
+    parser.add_argument('--username', help='A username to login into EXAoperations.', required=True)
+    parser.add_argument('--hostPortAndCluster', help='An url to connect to Exasol in format <host>:<port>/<cluster>/.',
+                        required=True)
+    parser.add_argument('--pathToDriver', help="A path to the driver'folder.", required=True)
+    parser.add_argument('--driverName', help='A name of the driver in the EXAoperations.', required=True)
+    parser.add_argument('--driverMainClass', help="A main class of the driver.", required=True)
+    parser.add_argument('--driverPrefix', help='A connection string prefix.', required=True)
     args = parser.parse_args()
 
     username = args.username
