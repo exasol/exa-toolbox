@@ -4,11 +4,10 @@
 
 - [Load data from Salesforce](#load-data-from-salesforce)
   * [Deployment](#deployment)
+  + [Prerequisites](#prerequisites)
   * [Usage](#usage)
-    + [How it works](#how-it-works)
-    + [Examples](#examples)
-
-
+    + [Simple example](#simple-example)
+    + [Advanced example](#advanced-example)
 
 <!-- tocstop -->
 
@@ -38,6 +37,7 @@ How to do this is explained [here](https://docs.exasol.com/database_concepts/buc
 4. Click onto the newly created BucketFS service (most likely named bucketfs1)
 and create a new bucket inside the service like explained [here](https://docs.exasol.com/database_concepts/bucketfs/create_new_bucket_in_bucketfs_service.htm). Make sure you
 check 'Public readable'.
+
 ![Image of BucketFS Bucket Creation](./images/create_bucket.png)
 
 #### Upload .whl files to bucket
@@ -58,7 +58,9 @@ create it and call it with a command similar to this one (adapt it to your bucke
 SELECT exa_toolbox.bucketfs_ls('/buckets/bucketfs1/demo_salesforce');
 ```
 The output should looke like this:
+
 ![Image of BucketFS-LS Output](./images/output_bucketfs_ls.png)
+
 Remember this path, we will later on include it in the script
 
 ## Usage
@@ -91,4 +93,8 @@ This example consists of two files:
 - A file containing the concrete implementations for the different Salesforce objects [salesforce_udf_get_objects.sql](./salesforce_udf_get_objects.sql)
 
 Please create the UDF contained in the library file first, then you're good to go and create the functions contained in the get_objects file.
-For both files, always make sure that you change the line `sys.path.extend(glob.glob('/buckets/bucketfs1/demo_salesforce/*'))` so that it matches your bucket-path (see section [Check if you successfully uploaded the files](#check-if-you-successfully-uploaded-the-files)).
+For both files, always make sure that you change the line 
+
+`sys.path.extend(glob.glob('/buckets/bucketfs1/demo_salesforce/*'))` 
+
+so that it matches your bucket-path (see section [Check if you successfully uploaded the files](#check-if-you-successfully-uploaded-the-files)).
