@@ -4,7 +4,7 @@
 
 - [Load data from Salesforce](#load-data-from-salesforce)
   * [Deployment](#deployment)
-  + [Prerequisites](#prerequisites)
+    + [Prerequisites](#prerequisites)
   * [Usage](#usage)
     + [Simple example](#simple-example)
     + [Advanced example](#advanced-example)
