@@ -23,7 +23,7 @@
 
 JSON data that is stored in EXASOL tables can be accessed through UDFs. This solution presents a generic Python UDF json_table to access field values in JSON documents through path expressions.
 
-See also https://www.exasol.com/support/browse/SOL-570
+See also https://community.exasol.com/t5/database-features/querying-and-converting-json-data-with-the-json-table-udf/ta-p/1800
 
 ## JSON flattening script
 
