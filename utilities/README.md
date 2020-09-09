@@ -51,6 +51,10 @@ Usage:
 SELECT check_tcp_listener_connection('127.0.0.1', '3000') from dual;
 ```
 
+Example:
+![Image of the logger in action](./img/netcat.png)
+
+
 ## upload_github_release_file_to_bucketfs
 ([upload_github_release_file_to_bucketfs.sql](upload_github_release_file_to_bucketfs.sql))
 
