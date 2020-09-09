@@ -5,6 +5,7 @@
 - [Utilities](#utilities)
   * [bucketfs_ls](#bucketfs_ls)
   * [check_connectivity](#check_connectivity)
+  * [check_tcp_listener_connection](#check_tcp_listener_connection)
   * [upload_github_release_file_to_bucketfs](#upload_github_release_file_to_bucketfs)
   * [language_info](#language_info)
   * [pub2slack](#pub2slack)
@@ -37,6 +38,17 @@ Use this UDF to check if a host and a specific port on that host is accessible. 
 Usage:
 ```sql
 SELECT check_connectivity('oraclesrv1.company.com', '1521');
+```
+
+## check_tcp_listener_connection
+([check_tcp_listener_connection.sql](check_tcp_listener_connection.sql))
+
+Use this UDF to check if a host and a specific port on that host is listening to debug messages. When the remote host is listening and the connection is working, the debug message is displayed on the listening remote hosts standard output.
+Using an external debug server for listening to script log messages can be usefull when developing UDF scripts.
+
+Usage:
+```sql
+SELECT check_tcp_listener_connection('127.0.0.1', '3000') from dual;
 ```
 
 ## upload_github_release_file_to_bucketfs
