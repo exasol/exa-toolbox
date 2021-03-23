@@ -1,4 +1,9 @@
+# Since Exasol v7.0 please use the native JSON functionality
+https://docs.exasol.com/sql_references/functions/json.htm
+
 # Table of Contents
+
+
 
 <!-- toc -->
 
