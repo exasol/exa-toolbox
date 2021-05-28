@@ -44,6 +44,7 @@ The EXA-toolbox is a collection of useful scripts and views that you can add to 
   * [check_tcp_listener_connection](utilities/README.md#check_tcp_listener_connection) 
   * [upload_github_release_file_to_bucketfs](utilities/README.md#upload_github_release_file_to_bucketfs)
   * [language_info](utilities/README.md#language_info)
+  * [number_of_cores](utilities/README.md#number_of_cores)
   * [pub2slack](utilities/README.md#pub2slack)
   * [database_warmup](utilities/README.md#database_warmup)
   * [session_watchdog](utilities/README.md#session_watchdog)

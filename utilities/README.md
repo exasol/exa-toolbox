@@ -8,6 +8,7 @@
   * [check_tcp_listener_connection](#check_tcp_listener_connection)
   * [upload_github_release_file_to_bucketfs](#upload_github_release_file_to_bucketfs)
   * [language_info](#language_info)
+  * [number_of_cores](#number_of_cores)
   * [pub2slack](#pub2slack)
   * [database_warmup](#database_warmup)
   * [session_watchdog](#session_watchdog)
@@ -86,6 +87,16 @@ SELECT lua_info(TRUE);
 SELECT java_info(TRUE);
 ```
 NOTE: `python3_info()` is only available (out of the box) in Exasol 6.2 and later version. 
+
+## number_of_cores
+([nuber_of_cores.sql](number_of_cores.sql))
+This UDF returns the number of cores of the database node it executes on. As long as Exasol cluster use the same machine type for every node,
+this information should be reliable.
+
+Usage:
+```sql
+SELECT number_of_cores();
+```
 
 ## pub2slack
 ([pub2slack.sql](pub2slack.sql))
