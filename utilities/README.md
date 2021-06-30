@@ -170,4 +170,5 @@ EXECUTE SCRIPT  EXA_TOOLBOX.SESSION_WATCHDOG();
 
 The attached scripts will help you setup a syncronization of LDAP groups and members with database roles and users.
 For more information on the usage of the script, please view the below community article:
-([https://community.exasol.com/t5/database-features/synchronization-of-ldap-active-directory-groups-and-members-to/ta-p/1686](Syncronization of LDAP/ Active Directory Groups and Members to Exasol Database Users and Roles))
+
+[Syncronization of LDAP/ Active Directory Groups and Members to Exasol Database Users and Roles](https://community.exasol.com/t5/database-features/synchronization-of-ldap-active-directory-groups-and-members-to/ta-p/1686)
