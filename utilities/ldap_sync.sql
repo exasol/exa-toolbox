@@ -6,6 +6,18 @@ and grant permissions. When users are removed from the group in LDAP, the users 
 For more information, please see the below community article:
 https://community.exasol.com/t5/database-features/synchronization-of-ldap-active-directory-groups-and-members-to/ta-p/1686
 
+Version 2.0:
+Changes in this version:
+ - Created HELPER script to help debug problems with AD attributes
+ - improved error handling in all Python scripts
+ - Added LDAP timeout parameter to 5 seconds
+ - Added comments to all scripts
+ - Added enhanced error handling to the Lua script
+ - Added DEBUG mode to Lua script, where all statements are rolled back at the end
+ - Changed logic of SQL to only GRANT or REVOKE when role membership has changed (previously would always do it)
+ - Added SQL logic to allow ALTERing a user in case the dn changes, but the username is the same
+ - Removed the CASCADE option from DROP USER. The script will display an error in the output that the user cannot be dropped. This is a sign for DBA to take action
+ - Changed output of script to display the query text, success/fail, and what the error message is. An error in one of the statements will no longer break the script
 
 */
 
