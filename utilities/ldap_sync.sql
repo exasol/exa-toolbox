@@ -21,7 +21,9 @@ Changes in this version:
 
 */
 
-CREATE SCHEMA AD;
+
+
+CREATE SCHEMA IF NOT EXISTS AD;
 
 
 --This script will search for the specified attribute on the given distinguished name
@@ -60,7 +62,7 @@ def run(ctx):
 
 	  		if ctx.ATTR in result_attrs:
 				for v in result_attrs[ctx.ATTR]:
-			             ctx.emit(ctx.SEARCH_STRING, ctx.ATTR, str(v))
+			             ctx.emit(ctx.SEARCH_STRING, ctx.ATTR, str(v).decode(encoding))#add .decode if there are special characters
 
 	except ldap.LDAPError, e:
 		if e.message['desc'] == 'No such object':
@@ -114,11 +116,11 @@ def run(ctx):
 			result_attrs = result[1]
 
 	  		for attrs in result_attrs:
-			     ctx.emit(result_dn, attrs, str(result_attrs[attrs]))
+			     ctx.emit(result_dn, attrs, str(result_attrs[attrs]).decode(encoding)) #add .decode if there are special characters
 
 	except ldap.LDAPError, e:
 		if e.message['desc'] == 'No such object':
-		      ctx.emit(ctx.SEARCH_STRING, ctx.ATTR, 'No such object')
+		      ctx.emit(ctx.SEARCH_STRING, 'error', 'No such object')
 		else:
 		      raise ldap.LDAPError(e.message['desc'])
 		
@@ -126,8 +128,6 @@ def run(ctx):
 		ldapClient.unbind_s()		
 
 /
-
-
 
 -- This script will perform the syncronizations
 --/
