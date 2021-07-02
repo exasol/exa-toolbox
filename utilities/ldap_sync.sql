@@ -23,12 +23,9 @@ Changes in this version:
 
 
 
-CREATE SCHEMA IF NOT EXISTS AD;
-
-
 --This script will search for the specified attribute on the given distinguished name
 --/
-CREATE OR REPLACE PYTHON SCALAR SCRIPT AD."GET_AD_ATTRIBUTE" ("LDAP_CONNECTION" VARCHAR(2000),"SEARCH_STRING" VARCHAR(2000) UTF8, "ATTR"  VARCHAR(1000)) EMITS ("SEARCH_STRING" VARCHAR(2000) UTF8, "ATTR" VARCHAR(1000), "VAL" VARCHAR(1000) UTF8) AS
+CREATE OR REPLACE PYTHON SCALAR SCRIPT EXA_TOOLBOX."GET_AD_ATTRIBUTE" ("LDAP_CONNECTION" VARCHAR(2000),"SEARCH_STRING" VARCHAR(2000) UTF8, "ATTR"  VARCHAR(1000)) EMITS ("SEARCH_STRING" VARCHAR(2000) UTF8, "ATTR" VARCHAR(1000), "VAL" VARCHAR(1000) UTF8) AS
 import ldap
 
 def run(ctx):
@@ -77,11 +74,11 @@ def run(ctx):
 
 
 -- This script will help you explore ldap attributes. This is helpful when you do not know which attributes contain the role members or the username
--- To find out which attributes contain the group members, you can run this: select ad.helper('LDAP_SERVER', ROLE_COMMENT) from exa_Dba_roles where role_name = <role name>
--- To find out which attributes contain the username, you can run this: select ad.helper('LDAP_SERVER', user_name) from exa_dba_connections WHERE connection_name = 'LDAP_SERVER'; 
--- For other purposes, you can run the script using the LDAP connection you created and the distinguished name of the object you want to investigate: SELECT AD.HELPER(<LDAP connection>,<distinguished name>);
+-- To find out which attributes contain the group members, you can run this: select EXA_TOOLBOX.LDAP_HELPER('LDAP_SERVER', ROLE_COMMENT) from exa_Dba_roles where role_name = <role name>
+-- To find out which attributes contain the username, you can run this: select EXA_TOOLBOX.LDAP_HELPER('LDAP_SERVER', user_name) from exa_dba_connections WHERE connection_name = 'LDAP_SERVER'; 
+-- For other purposes, you can run the script using the LDAP connection you created and the distinguished name of the object you want to investigate: SELECT EXA_TOOLBOX.LDAP_HELPER(<LDAP connection>,<distinguished name>);
 --/
-CREATE OR REPLACE PYTHON SCALAR SCRIPT AD."HELPER" ("LDAP_CONNECTION" VARCHAR(2000),"SEARCH_STRING" VARCHAR(2000) UTF8) EMITS ("SEARCH_STRING" VARCHAR(2000) UTF8, "ATTR" VARCHAR(1000), "VAL" VARCHAR(1000) UTF8) AS
+CREATE OR REPLACE PYTHON SCALAR SCRIPT EXA_TOOLBOX."LDAP_HELPER" ("LDAP_CONNECTION" VARCHAR(2000),"SEARCH_STRING" VARCHAR(2000) UTF8) EMITS ("SEARCH_STRING" VARCHAR(2000) UTF8, "ATTR" VARCHAR(1000), "VAL" VARCHAR(1000) UTF8) AS
 
 
 import ldap
@@ -131,7 +128,7 @@ def run(ctx):
 
 -- This script will perform the syncronizations
 --/
-CREATE OR REPLACE LUA SCRIPT AD."SYNC_AD_GROUPS_TO_DB_ROLES_AND_USERS" (LDAP_CONNECTION, GROUP_ATTRIBUTE, USER_ATTRIBUTE, EXECUTION_MODE) RETURNS TABLE AS
+CREATE OR REPLACE LUA SCRIPT EXA_TOOLBOX."SYNC_AD_GROUPS_TO_DB_ROLES_AND_USERS" (LDAP_CONNECTION, GROUP_ATTRIBUTE, USER_ATTRIBUTE, EXECUTION_MODE) RETURNS TABLE AS
 
 -- GROUP ATTRIBUTE refers to the attribute to search in the group for all of the members. Default is 'member'
 -- USER ATTRIBUTE refers to the attribute of the user which contains the username. Default is uid
@@ -163,7 +160,7 @@ WITH
 get_ad_group_members AS (
 -- This CTE will get the list of members in LDAP for each role that contains a comment
 		SELECT  
-		AD.GET_AD_ATTRIBUTE(:l, ROLE_COMMENT, :g)
+		EXA_TOOLBOX.GET_AD_ATTRIBUTE(:l, ROLE_COMMENT, :g)
 		FROM
 		EXA_DBA_ROLES
 		where ROLE_NAME NOT IN ('PUBLIC','DBA') AND ROLE_COMMENT IS NOT NULL 
@@ -184,7 +181,7 @@ get_ad_group_members AS (
 -- In these cases, the script will ALTER the user and change the distinguished name instead of re-creating the user
         SELECT 'ALTER USER "' || upper(VAL) || '" IDENTIFIED AT LDAP AS ''' || SEARCH_STRING || ''';' AS DCL_STATEMENT, 1 ORDER_ID, UPPER(val) VAL, search_string
         FROM (
-                select AD.GET_AD_ATTRIBUTE(:l, VAL, :u) from
+                select EXA_TOOLBOX.GET_AD_ATTRIBUTE(:l, VAL, :u) from
 			(
 				select distinct VAL
 				from	
@@ -226,7 +223,7 @@ get_ad_group_members AS (
 		from
 
 		(
-			select AD.GET_AD_ATTRIBUTE(:l, VAL, :u) from
+			select EXA_TOOLBOX.GET_AD_ATTRIBUTE(:l, VAL, :u) from
 			(
 				select distinct VAL
 				from	
@@ -252,7 +249,7 @@ get_ad_group_members AS (
 	)
 ,all_user_names(DISTINGUISHED_NAME, VAL, USER_NAME)  as (
 -- This CTE will get the "user name" attribute for LDAP. The exact attribute may vary
-	select AD.GET_AD_ATTRIBUTE(:l, VAL, :u) from
+	select EXA_TOOLBOX.GET_AD_ATTRIBUTE(:l, VAL, :u) from
 	(
 		select distinct VAL
 		from	
