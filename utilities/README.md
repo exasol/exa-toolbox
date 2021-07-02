@@ -11,6 +11,7 @@
   * [pub2slack](#pub2slack)
   * [database_warmup](#database_warmup)
   * [session_watchdog](#session_watchdog)
+  * [ldap sync] (#ldap_sync)
 
 <!-- tocstop -->
 
@@ -164,3 +165,10 @@ Usage:
 ```sql
 EXECUTE SCRIPT  EXA_TOOLBOX.SESSION_WATCHDOG();
 ```
+## ldap_sync
+([ldap_sync.sql](ldap_sync.sql))
+
+The attached scripts will help you setup a syncronization of LDAP groups and members with database roles and users.
+For more information on the usage of the script, please view the below community article:
+
+[Syncronization of LDAP/ Active Directory Groups and Members to Exasol Database Users and Roles](https://community.exasol.com/t5/database-features/synchronization-of-ldap-active-directory-groups-and-members-to/ta-p/1686)
