@@ -6,6 +6,9 @@ and grant permissions. When users are removed from the group in LDAP, the users 
 For more information, please see the below community article:
 https://community.exasol.com/t5/database-features/synchronization-of-ldap-active-directory-groups-and-members-to/ta-p/1686
 
+Version 2.1:
+ - Re-arranged order of setting ldap parameters and binding based on https://www.python-ldap.org/en/python-ldap-3.3.0/reference/ldap.html
+
 Version 2.0:
 Changes in this version:
  - Created HELPER script to help debug problems with AD attributes
@@ -38,14 +41,14 @@ def run(ctx):
 	encoding = "utf8"  #may depend on ldap server, try latin1 or cp1252 if you get problems with special characters
 
 	try:
-		# Connects to LDAP
-		ldapClient = ldap.initialize(uri)
-		
 		#Sets a timeout of 5 seconds to connect to LDAP
-		ldapClient.set_option(ldap.OPT_NETWORK_TIMEOUT, 5.0)
+		ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 5.0)
 		
 		#The below line is only needed when connecting via ldaps
-		ldapClient.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)   # required options for SSL without cert checking
+		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)   # required options for SSL without cert checking
+		
+		# Connects to LDAP
+		ldapClient = ldap.initialize(uri)
 		
 		#Authenticates with user
 		ldapClient.bind_s(user, password)
@@ -93,14 +96,14 @@ def run(ctx):
 	encoding = "utf8"  #may depend on ldap server, try latin1 or cp1252 if you get problems with special characters
 
 	try:
-		# Connects to LDAP
-		ldapClient = ldap.initialize(uri)
-		
 		#Sets a timeout of 5 seconds to connect to LDAP
 		ldapClient.set_option(ldap.OPT_NETWORK_TIMEOUT, 5.0)
 		
 		#The below line is only needed when connecting via ldaps
 		ldapClient.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)   # required options for SSL without cert checking
+		
+		# Connects to LDAP
+		ldapClient = ldap.initialize(uri)
 		
 		#Authenticates with user
 		ldapClient.bind_s(user, password)
