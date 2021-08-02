@@ -12,7 +12,8 @@
   * [pub2slack](#pub2slack)
   * [database_warmup](#database_warmup)
   * [session_watchdog](#session_watchdog)
-  * [ldap sync] (#ldap_sync)
+  * [ldap sync](#ldap_sync)
+  * [create_or_replace_view_preserve_grants](#create_or_replace_view_preserve_grants)
 
 <!-- tocstop -->
 
@@ -183,3 +184,14 @@ The attached scripts will help you setup a syncronization of LDAP groups and mem
 For more information on the usage of the script, please view the below community article:
 
 [Syncronization of LDAP/ Active Directory Groups and Members to Exasol Database Users and Roles](https://community.exasol.com/t5/database-features/synchronization-of-ldap-active-directory-groups-and-members-to/ta-p/1686)
+
+## create_or_replace_view_preserve_grants
+([reate_or_replace_view_preserve_grants.sql](create_or_replace_view_preserve_grants.sql))
+The Lua script allows to create or replace views preserving the existing grants.
+Usage:
+```sql
+EXECUTE SCRIPT EXA_TOOLBOX.create_or_replace_view_preserve_grants('CREATE or replace view s1.v1 as select * from dual') ;
+```
+
+**Additional Notes**
+Please ensure that the Parameter has to start with "create or replace view "
