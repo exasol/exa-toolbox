@@ -12,7 +12,10 @@
   * [pub2slack](#pub2slack)
   * [database_warmup](#database_warmup)
   * [session_watchdog](#session_watchdog)
-  * [ldap sync] (#ldap_sync)
+  * [ldap_sync](#ldap_sync)
+  * [create_table_ddl](#create_table_ddl)
+  * [create_view_ddl](#create_view_ddl)
+  * [3rdLevelStatistics](#3rdLevelStatistics)
 
 <!-- tocstop -->
 
@@ -183,3 +186,35 @@ The attached scripts will help you setup a syncronization of LDAP groups and mem
 For more information on the usage of the script, please view the below community article:
 
 [Syncronization of LDAP/ Active Directory Groups and Members to Exasol Database Users and Roles](https://community.exasol.com/t5/database-features/synchronization-of-ldap-active-directory-groups-and-members-to/ta-p/1686)
+
+## create_table_ddl
+([create_table_ddl.sql](create_table_ddl.sql))
+
+This script creates DDL for a specified table.
+The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
+For more information on the usage of the script, please view the below community article:
+
+[Create DDL for a table](https://community.exasol.com/t5/database-features/create-ddl-for-a-table/ta-p/1418)
+
+## create_view_ddl
+([create_view_ddl.sql](create_view_ddl.sql))
+
+This script creates DDL statements for recursive dependencies of a view. 
+The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
+For more information on the usage of the script, please view the below community article:
+
+[How to create DDL for Exasol support](https://community.exasol.com/t5/database-features/how-to-create-ddl-for-exasol-support/ta-p/1734)
+
+## 3rdLevelStatistics
+DB versions up to 7.0:
+  * [3rdLevelStats_leq_DBv70_Indices.sql](3rdLevelStats_leq_DBv70_Indices.sql)
+  * [3rdLevelStats_leq_DBv70_LastDay.sql](3rdLevelStats_leq_DBv70_LastDay.sql)
+  * [3rdLevelStats_leq_DBv70_Hourly.sql](3rdLevelStats_leq_DBv70_Hourly.sql)
+
+DB versions starting from 7.1:
+  * [3rdLevelStatistics_geq_DBv71.sql](3rdLevelStatistics_geq_DBv71.sql)
+
+The scripts to export database usage statistics for investigation by support.
+For more information on the usage of the script, please view the below community article:
+
+[Statistics export for support](https://community.exasol.com/t5/database-features/statistics-export-for-support-v6-x/ta-p/1778)

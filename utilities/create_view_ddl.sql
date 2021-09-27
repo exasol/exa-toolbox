@@ -4,15 +4,15 @@ create schema if not exists exa_toolbox;
         This script creates DDL statements for recursive dependencies of a view. 
         The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
         
-        Originally mentioned in solution https://www.exasol.com/support/browse/SOL-584
+        Originally mentioned in article https://community.exasol.com/t5/database-features/how-to-create-ddl-for-exasol-support/ta-p/1734
 */
 
 --/
-create or replace script exa_toolbox.create_DDL(view_schema, view_name) returns table as
+create or replace script exa_toolbox.create_view_ddl(view_schema, view_name) returns table as
 /* 
 PARAMETERS: 
 	-	view_schema: 	location of view (case-sensitive)
-	-	view_name: 	name of view (case-sensitive)
+	-	view_name: 		name of view (case-sensitive)
 
 */
 local summary = {}
@@ -112,24 +112,28 @@ function add_table( table_schema, table_name )
 	end
 
 	schema:ensure( table_schema )
-
-	local at1_success, at1_res = pquery([[
 			SELECT * 
-			FROM EXA_ALL_COLUMNS
+			FROM EXA_DBA_COLUMNS
 			WHERE COLUMN_SCHEMA=:s 
 			  AND COLUMN_TABLE=:t
+	local at1_success, at1_res = pquery([[
+
 			ORDER BY COLUMN_ORDINAL_POSITION
 		]],
 		{s=table_schema, t=table_name}
 	)
 	if not at1_success then  
 		error( 'Error at at1: ' .. at1_res.error_text )
+	elseif #at1_res == 0 then
+		local user_query = query('select CURRENT_USER as user_name from dual')
+		error( 'Error at at1: The current user ' .. quote(user_query[1].USER_NAME) ..
+		' has no access to the object ' .. quote(table_schema) .. '.' ..quote(table_name))
 	else
 		sqlstr:append(
 			[[CREATE TABLE ]] ..
-			quote(at1_res[1].COLUMN_SCHEMA) ..
+			quote(table_schema) ..
 			'.' ..
-			quote(at1_res[1].COLUMN_TABLE) ..
+			quote(table_name) ..
 			'(\n\t'
 		)
 		local distr_keys = {}
@@ -152,14 +156,14 @@ function add_table( table_schema, table_name )
 
 			table.insert( columns, col_def )
 
-			if at1_res[i].COLUMN_IS_DISTRIBUTION_KEY == 'TRUE' then
+			if at1_res[i].COLUMN_IS_DISTRIBUTION_KEY then
 				table.insert(distr_keys, quote(at1_res[i].COLUMN_NAME))
 			end
 		end --for
 		sqlstr:append( table.concat(columns, ',\n\t') )
 
 		if #distr_keys > 0 then	
-			sqlstr:append( ',\n\tDISTRIBUTE BY\n\t\t"' .. table.concat(distr_keys, ',\n\t\t') )
+			sqlstr:append( ',\n\tDISTRIBUTE BY\n\t\t' .. table.concat(distr_keys, ',\n\t\t') )
 		end
 		sqlstr:append('\n);')
 		sqlstr:commit()
@@ -207,24 +211,14 @@ function add_function( function_schema, function_name )
 			when
 				substr(
 					rtrim(
-						REGEXP_REPLACE(
+						translate(
 							function_text,
-							'[' || CHR(10) || CHR(13) || ']',
-							' '
+							CHR(10) || CHR(13),
+							'  '
 						),
 						' '
 					),
-					length(
-						rtrim(
-							REGEXP_REPLACE(
-								function_text,
-								'[' || CHR(10) || CHR(13) || ']',
-								' '
-							),
-							' '
-						)
-					),
-					1
+					-1
 				) <> '/'
 			then
 				'
@@ -299,7 +293,7 @@ end
 -- MAIN --------------------------------------------------------------------------------------------------------------------------------------------
 
 -- add header
-local t=query([[SELECT CURRENT_USER,CURRENT_TIMESTAMP]])
+local t = query([[SELECT CURRENT_USER,CURRENT_TIMESTAMP]])
 print( '--DDL created by user '..t[1].CURRENT_USER..' at '..t[1].CURRENT_TIMESTAMP )
 
 
@@ -352,4 +346,6 @@ return summary, "DDL varchar(2000000)"
 
 /
 
--- execute script exa_toolbox.create_DDL('DUT', 'TRUNK');
+-- Example:
+
+-- execute script exa_toolbox.create_view_ddl('DUT', 'TRUNK');
