@@ -166,7 +166,7 @@ get_ad_group_members AS (
 		EXA_TOOLBOX.GET_AD_ATTRIBUTE(:l, ROLE_COMMENT, :g)
 		FROM
 		EXA_DBA_ROLES
-		where ROLE_NAME NOT IN ('PUBLIC','DBA') AND ROLE_COMMENT IS NOT NULL 
+		where ROLE_NAME NOT IN ('PUBLIC','DBA') AND ROLE_COMMENT IS NOT NULL AND INSTR(LOWER(ROLE_COMMENT),'dc=')>0
 		--exclude default EXASOL groups, all other roles MUST be mapped to AD/LDAP groups
 		--the mapping to a LDAP role is done via a COMMENT 
 	)
