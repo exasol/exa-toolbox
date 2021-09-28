@@ -49,5 +49,8 @@ The EXA-toolbox is a collection of useful scripts and views that you can add to 
   * [database_warmup](utilities/README.md#database_warmup)
   * [session_watchdog](utilities/README.md#session_watchdog)
   * [ldap_sync](utilities/README.md#ldap_sync)
+  * [create_table_ddl](utilities/README.md#create_table_ddl)
+  * [create_view_ddl](utilities/README.md#create_view_ddl)
+  * [3rdLevelStatistics](utilities/README.md#3rdLevelStatistics)
 - [Preprocessing](preprocessing)
 
