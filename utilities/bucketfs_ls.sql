@@ -12,23 +12,12 @@
 CREATE SCHEMA IF NOT EXISTS EXA_toolbox;
 
 --/
-CREATE OR REPLACE PYTHON SCALAR SCRIPT EXA_toolbox.bucketfs_ls(my_path VARCHAR(256)) EMITS (files VARCHAR(256)) AS
-import subprocess
+CREATE OR REPLACE PYTHON3 SCALAR SCRIPT EXA_toolbox.bucketfs_ls(my_path VARCHAR(256)) EMITS (files VARCHAR(256)) AS
+import os
 
-def run(c):
-    try:
-        p = subprocess.Popen('ls -F ' + c.my_path,
-                             stdout    = subprocess.PIPE,
-                             stderr    = subprocess.STDOUT,
-                             close_fds = True,
-                             shell     = True)
-        out, err = p.communicate()
-        for line in out.strip().split('\n'):
-            c.emit(line)
-    finally:
-        if p is not None:
-            try: p.kill()
-            except: pass
+def run(ctx):
+	for line in os.listdir(ctx.my_path):
+		ctx.emit(line)
 /
 
 -- Example:
