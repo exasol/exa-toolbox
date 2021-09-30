@@ -12,7 +12,8 @@
   * [pub2slack](#pub2slack)
   * [database_warmup](#database_warmup)
   * [session_watchdog](#session_watchdog)
-  * [ldap_sync](#ldap_sync)
+  * [ldap sync](#ldap_sync)
+  * [create_or_replace_view_preserve_grants](#create_or_replace_view_preserve_grants)
   * [create_table_ddl](#create_table_ddl)
   * [create_view_ddl](#create_view_ddl)
   * [3rdLevelStatistics](#3rdLevelStatistics)
@@ -187,6 +188,18 @@ For more information on the usage of the script, please view the below community
 
 [Syncronization of LDAP/ Active Directory Groups and Members to Exasol Database Users and Roles](https://community.exasol.com/t5/database-features/synchronization-of-ldap-active-directory-groups-and-members-to/ta-p/1686)
 
+
+## create_or_replace_view_preserve_grants
+([reate_or_replace_view_preserve_grants.sql](create_or_replace_view_preserve_grants.sql))
+The Lua script allows to create or replace views preserving the existing grants.
+Usage:
+```sql
+EXECUTE SCRIPT EXA_TOOLBOX.create_or_replace_view_preserve_grants('CREATE or replace view s1.v1 as select * from dual') ;
+```
+
+**Additional Notes**
+Please ensure that the Parameter has to start with "create or replace view "
+
 ## create_table_ddl
 ([create_table_ddl.sql](create_table_ddl.sql))
 
@@ -218,3 +231,4 @@ The scripts to export database usage statistics for investigation by support.
 For more information on the usage of the script, please view the below community article:
 
 [Statistics export for support](https://community.exasol.com/t5/database-features/statistics-export-for-support-v6-x/ta-p/1778)
+
