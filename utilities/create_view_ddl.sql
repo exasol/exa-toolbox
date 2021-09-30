@@ -112,18 +112,18 @@ function add_table( table_schema, table_name )
 	end
 
 	schema:ensure( table_schema )
+
+	local at1_success, at1_res = pquery([[
 			SELECT * 
 			FROM EXA_DBA_COLUMNS
 			WHERE COLUMN_SCHEMA=:s 
 			  AND COLUMN_TABLE=:t
-	local at1_success, at1_res = pquery([[
-
 			ORDER BY COLUMN_ORDINAL_POSITION
 		]],
 		{s=table_schema, t=table_name}
 	)
 	if not at1_success then  
-		error( 'Error at at1: ' .. at1_res.error_text )
+		error( 'Error at at1: ' .. at1_res.error_message )
 	elseif #at1_res == 0 then
 		local user_query = query('select CURRENT_USER as user_name from dual')
 		error( 'Error at at1: The current user ' .. quote(user_query[1].USER_NAME) ..
@@ -234,7 +234,7 @@ function add_function( function_schema, function_name )
 
 
 	if not m21_success then
-		error('Error at m21: ' .. m21_res.error_text)
+		error('Error at m21: ' .. m21_res.error_message)
 	else
 		for j=1,(#m21_res) do
 			schema:open( function_schema )
