@@ -258,7 +258,7 @@ function add_script( script_schema, script_name )
 	end
 
 	schema:open( as1_res[1].SCRIPT_SCHEMA )
-	print( as1_res[1].SCRIPT_TEXT .. '\n\/' )
+	print( as1_res[1].SCRIPT_TEXT .. '\n/' )
 end
 
 
