@@ -13,7 +13,6 @@ create or replace script exa_toolbox.create_view_ddl(view_schema, view_name) ret
 PARAMETERS: 
 	-	view_schema: 	location of view (case-sensitive)
 	-	view_name: 		name of view (case-sensitive)
-
 */
 local summary = {}
 local constraints_separately = true
@@ -69,8 +68,9 @@ section = {
 		local width = 40
 
 		print( '\n\n\n--' .. string.rep('=', width) .. '--' )
-		local pad = string.rep(' ', (width - #name)/2 )
-		print( '--' .. pad .. name .. pad .. '--' )
+		local pad_left_len = math.floor((width - #name)/2)
+		local pad_right_len = width - pad_left_len - #name
+		print( '--' .. string.rep(' ', pad_left_len) .. name .. string.rep(' ', pad_right_len) .. '--' )
 		print( '--' .. string.rep('=', width) .. '--' )
 
 		self.current = name
@@ -206,26 +206,8 @@ end
 function add_function( function_schema, function_name )
 	local m21_success, m21_res=pquery([[
 	SELECT
-		FUNCTION_NAME,
-		FUNCTION_TEXT || case
-			when
-				substr(
-					rtrim(
-						translate(
-							function_text,
-							CHR(10) || CHR(13),
-							'  '
-						),
-						' '
-					),
-					-1
-				) <> '/'
-			then
-				'
-/'
-			else
-				''
-		end function_text
+		FUNCTION_NAME
+		, 'CREATE ' || rtrim(FUNCTION_TEXT, '/' || CHR(13) || CHR(10)) || CHR(13) || CHR(10) || '/' AS function_text
 	FROM
 		EXA_DBA_FUNCTIONS
 		WHERE FUNCTION_SCHEMA=:s and FUNCTION_NAME = :n
@@ -298,7 +280,7 @@ print( '--DDL created by user '..t[1].CURRENT_USER..' at '..t[1].CURRENT_TIMESTA
 
 
 -- init: make sure the view exists and is valid (including all dependencies)
-query( [[describe ::S.::V]], { S = view_schema, V = view_name } )
+query( [[describe ::S.::V]], { S = quote(view_schema), V = quote(view_name) } )
 
 
 
