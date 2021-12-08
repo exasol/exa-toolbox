@@ -232,3 +232,4 @@ For more information on the usage of the script, please view the below community
 
 [Statistics export for support](https://community.exasol.com/t5/database-features/statistics-export-for-support-v6-x/ta-p/1778)
 
+## Generator - Union All View
