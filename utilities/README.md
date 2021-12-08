@@ -236,7 +236,38 @@ For more information on the usage of the script, please view the below community
 ## Union_All_Optimization_-_generate_view
   * [generator_union_all_view.sql](generator_union_all_view.sql)
 
-Generate sub tables combined in a view. This script creates a specified number of tables and generates the view with all sub tables included by using ``` union all ```. With the help of this sub tables you can write in parallel to the database as discribed in the communityas [Union all Optimization](https://community.exasol.com/t5/database-features/union-all-optimization/ta-p/1607). 
+Description:
+It is possible to import data to Exasol in parallel by creating multiple sub tables and combining them within an ```union all``` clause. See also this community post for more information - [Union all Optimization](https://community.exasol.com/t5/database-features/union-all-optimization/ta-p/1607). 
+
+Script: 
+The script generates with the help of some input parameter sql statements to generate those sub tables and combines all generated tables in one view. Neccessary for the execution is the origin schema and origin table you want to import parallel into. Additional you need either the number of tables you want to generate (e.g. 20) or an array with diffrent name you want to set instead of the number. Generated tables with the help of the number will be generated like: "SCHEMA"."TABLE_1","SCHEMA"."TABLE_2","SCHEMA"."TABLE_3", etc. . 
+
+!!! IMPORTANT: the script is executed right away and immedetialy generates the tables as well as the view. !!!
+
+Execution:
+For the execution you can either set a number of sub tables or set an array with values. If the number is null the script will generate the table as discribed in the array. Following there will be two examples on how to use the script. 
+
+Execution with the number set to 20:
+```sql
+EXECUTE SCRIPT EXA_TOOLBOX.GENERATE_VIEW (  'RETAIL' -- original schema
+                                ,'PRODUCTS' -- origin table 
+                                ,20 -- Specify the number of sub tables (if null array will be used)
+                                ,ARRAY(NULL) -- array if you want to specify the names of the subtables
+                                ) with output;
+
+```
+Execution when using an array:
+```sql
+EXECUTE SCRIPT EXA_TOOLBOX.GENERATE_VIEW (  'RETAIL' -- original schema
+                                ,'PRODUCTS' -- origin table 
+                                ,NULL-- Specify the number of sub tables (if null array will be used)
+                                ,ARRAY('PRODUCTS_BOOKS', 'PRODUCTS_FASHION', 'PRODUCTS_HEALTHCARE') -- array if you want to specify the names of the subtables
+                                ) with output;
+
+```
+
+
+
 
 Following you see an execution example with all the variables necessary.
 
