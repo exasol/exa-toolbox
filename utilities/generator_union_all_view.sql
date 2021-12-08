@@ -21,11 +21,16 @@ CREATE OR REPLACE SCRIPT EXA_TOOLBOX.GENERATE_VIEW(origin_schema,origin_table,nu
         v_stmt = {}
         
         -- Decide if Array or num
+        output(number_of_tables)
+        
         if number_of_tables == null then
+                -- output('if null = true')
                 -- use array
                 for a=1, #table_name_array do
+                        
+                        schema_ar_table = origin_schema .. "." .. quote(table_name_array[a])
                                                 
-                        create_stm = [[create or replace table ]].. origin_schema .. "." .. table_name_array[a] .." like ".. origin_st .. ";"
+                        create_stm = [[create or replace table ]].. schema_ar_table .." like ".. origin_st .. ";"
                         
                         suc, res = pquery(create_stm)
                                                
@@ -37,10 +42,10 @@ CREATE OR REPLACE SCRIPT EXA_TOOLBOX.GENERATE_VIEW(origin_schema,origin_table,nu
                         
                         if a == #table_name_array then
                                 -- output("t == number: true")
-                                v_str = [[select * from ]].. origin_st ..[[_]] .. a 
+                                v_str = [[select * from ]].. schema_ar_table 
                        else
                                 -- output("t==number: not true")
-                                v_str = [[select * from ]].. origin_st ..[[_]] .. a ..[[ union all ]]
+                                v_str = [[select * from ]].. schema_ar_table ..[[ union all ]]
                        end
                         
                         table.insert(v_stmt,v_str)
@@ -87,6 +92,8 @@ CREATE OR REPLACE SCRIPT EXA_TOOLBOX.GENERATE_VIEW(origin_schema,origin_table,nu
         -- generate union statement from array
         v_stmt_txt = "(" .. table.concat(v_stmt,'') .. ")"
         
+        -- output(v_stmt_txt)
+        
         -- remove quotes to add "_v"
         v_table_inst = origin_table:gsub([["]],[[]]) .. "_v" 
         
@@ -109,11 +116,10 @@ CREATE OR REPLACE SCRIPT EXA_TOOLBOX.GENERATE_VIEW(origin_schema,origin_table,nu
         return res      
         
 /
-
-EXECUTE SCRIPT EXA_TOOLBOX.GENERATE_VIEW (  'retail' -- original schema
-                                ,'CITIES' -- origin table 
-                                ,20 -- Specifi the number of sub tables (if null array will be used)
-                                ,ARRAY('table_1', 'table_2', 'table_3') -- array if you want to specify the names of the subtables
+-- example execution
+EXECUTE SCRIPT EXA_TOOLBOX.GENERATE_VIEW (  'RETAIL' -- original schema
+                                ,'PRODUCTS' -- origin table 
+                                ,20 -- Specify the number of sub tables (if null array will be used)
+                                ,ARRAY('PRODUCTS_BOOKS', 'PRODUCTS_FASHION', 'PRODUCTS_HEALTHCARE') -- array if you want to specify the names of the subtables
                                 ) with output;
-                                
                                 
