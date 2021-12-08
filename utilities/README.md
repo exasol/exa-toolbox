@@ -242,15 +242,15 @@ It is possible to import data to Exasol in parallel by creating multiple sub tab
 
 **Script:**
 
-The script generates with the help of some input parameter sql statements to generate those sub tables and combines all generated tables in one view. Neccessary for the execution is the origin schema and origin table you want to import parallel into. Additional you need either the number of tables you want to generate (e.g. 20) or an array with diffrent name you want to set instead of the number. Generated tables with the help of the number will be generated like: "SCHEMA"."TABLE_1","SCHEMA"."TABLE_2","SCHEMA"."TABLE_3", etc. . 
-
-!!! IMPORTANT: the script is executed right away and immedetialy generates the tables as well as the view. !!!
+With the help of input parameters the script generates sql statements wich creates multiple sub tables and combines all in one view. Necessary for the execution is the origin schema and origin table you want to import parallel into. Additional you need either the number of tables you want to generate or an array with diffrent tables names you want to set. Tables generated with the help of the number will look similar to this: "SCHEMA"."TABLE_1","SCHEMA"."TABLE_2","SCHEMA"."TABLE_3", etc. . 
 
 **Execution:**
 
-For the execution you can either set a number of sub tables or set an array with values. If the number is null the script will generate the table as discribed in the array. Following there will be two examples on how to use the script. 
+!!! IMPORTANT: when the script is executed the tables and the view is generated immediately !!!
 
-Execution with the number set to 20:
+For the execution you can either set a number of sub tables or an array with values. If the number is null the script will generate the table as described in the array. Following there will be two examples on how to use the script. 
+
+Execution with the number set:
 ```sql
 EXECUTE SCRIPT EXA_TOOLBOX.GENERATE_VIEW (  'RETAIL' -- original schema
                                 ,'PRODUCTS' -- origin table 
