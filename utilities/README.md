@@ -236,7 +236,7 @@ For more information on the usage of the script, please view the below community
 ## Union_All_Optimization_-_generate_view
   * [generator_union_all_view.sql](generator_union_all_view.sql)
 
-Generate sub tables combined in a view. This script creates a specified number of tables and generates the view with all sub tables included by using ``` union all ```. With the help of this sub tables you can write in parallel to the database as discribed in the communityas [Union all Optimization][https://community.exasol.com/t5/database-features/union-all-optimization/ta-p/1607]. 
+Generate sub tables combined in a view. This script creates a specified number of tables and generates the view with all sub tables included by using ``` union all ```. With the help of this sub tables you can write in parallel to the database as discribed in the communityas [Union all Optimization](https://community.exasol.com/t5/database-features/union-all-optimization/ta-p/1607). 
 
 Following you see an execution example with all the variables necessary.
 
