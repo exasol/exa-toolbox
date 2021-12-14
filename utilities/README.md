@@ -16,6 +16,7 @@
   * [create_or_replace_view_preserve_grants](#create_or_replace_view_preserve_grants)
   * [create_table_ddl](#create_table_ddl)
   * [create_view_ddl](#create_view_ddl)
+  * [create_db_ddl](#create_db_ddl)
   * [3rdLevelStatistics](#3rdLevelStatistics)
   * [Union_All_Optimization_-_generate_view](#Union_All_Optimization_-_generate_view)
 
@@ -218,6 +219,15 @@ The DDL are presented as a single-column result-set and are ready for copy/paste
 For more information on the usage of the script, please view the below community article:
 
 [How to create DDL for Exasol support](https://community.exasol.com/t5/database-features/how-to-create-ddl-for-exasol-support/ta-p/1734)
+
+## create_db_ddl
+([create_db_ddl.sql](create_db_ddl.sql))
+
+This script creates DDL statements for an entire database. 
+The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
+For more information on the usage of the script, please view the below community article:
+
+[Create DDL for the entire Database](https://community.exasol.com/t5/database-features/create-ddl-for-the-entire-database/ta-p/1417)
 
 ## 3rdLevelStatistics
 DB versions up to 7.0:
