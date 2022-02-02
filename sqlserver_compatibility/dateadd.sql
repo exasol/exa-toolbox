@@ -37,7 +37,7 @@ BEGIN
     ELSIF v_ucase_interval IN ('MONTH', 'MM', 'M') THEN
         -- Handle negative number
         IF p_interval_val < 0 THEN
-            v_result := v_date + NUMTOYMINTERVAL(p_interval_val * -1, 'MONTH') + NUMTODSINTERVAL(0, 'HOUR');
+            v_result := v_date - NUMTOYMINTERVAL(p_interval_val * -1, 'MONTH') + NUMTODSINTERVAL(0, 'HOUR');
         ELSE
             v_result := v_date + NUMTOYMINTERVAL(p_interval_val, 'MONTH') + NUMTODSINTERVAL(0, 'HOUR');
         END IF;
