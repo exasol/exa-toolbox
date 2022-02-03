@@ -74,11 +74,13 @@ CHANGE LOG:
         - Added new options IDLE_TIMEOUT and QUERY_TIMEOUT to consumer groups
 2021-12-10
         - Changed add_script according to community request (handle duplicate names)
+2022-01-07
+        - Added snapshot execution (for 6.2 and 7.0 users)
 */
 
 -- sqlstring concatination
 function check_version()
-        version_suc, version = pquery([[SELECT SUBSTR(PARAM_VALUE, 0, 3) VERSION_NUMBER, PARAM_VALUE version_full FROM EXA_METADATA WHERE PARAM_NAME = 'databaseProductVersion']])
+        version_suc, version = pquery([[/*snapshot execution*/SELECT SUBSTR(PARAM_VALUE, 0, 3) VERSION_NUMBER, PARAM_VALUE version_full FROM EXA_METADATA WHERE PARAM_NAME = 'databaseProductVersion']])
 
         if not (version_suc) then
                 error('error determining version')
@@ -122,12 +124,12 @@ function ddl_endings()
         sqlstr_flush()
         sqlstr_lf()
         sqlstr_add('COMMIT;')
-        sqlstr_commit();
+        sqlstr_commit()
 end
 
 function add_all_connections()                  -- ADD ALL CONNECTIONS -------------------------------------------------------------------------------------
 
-        ac1_success,ac1_res = pquery([[select CONNECTION_NAME, CASE WHEN CONNECTION_STRING IS NOT NULL THEN CONNECTION_STRING  ELSE ' ' end CONNECTION_STRING,
+        ac1_success,ac1_res = pquery([[/*snapshot execution*/select CONNECTION_NAME, CASE WHEN CONNECTION_STRING IS NOT NULL THEN CONNECTION_STRING  ELSE ' ' end CONNECTION_STRING,
         USER_NAME, CREATED, CONNECTION_COMMENT  from EXA_DBA_CONNECTIONS]])
         if not ac1_success then
                 error('Error at ac1')
@@ -153,7 +155,7 @@ end
 
 
 function add_all_roles()                                        -- ADD ALL ROLES -----------------------------------------------------------------------------------------
-        ar1_success, ar1_res = pquery([[SELECT * FROM EXA_DBA_ROLES]])
+        ar1_success, ar1_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_ROLES]])
         if not ar1_success then
                 error('Error at ar1')
         end
@@ -184,7 +186,7 @@ end
 
 function add_all_users()                                        -- ADD ALL USERS -----------------------------------------------------------------------------------------
 
-        aau1_success, aau1_res = pquery([[SELECT * FROM EXA_DBA_USERS]])
+        aau1_success, aau1_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_USERS]])
         if not aau1_success then
                 error('Error at aau1')
         end
@@ -213,14 +215,23 @@ function add_all_users()                                        -- ADD ALL USERS
                                         sqlstr_commit()
                                         sqlstr_add('\t\tCOMMENT ON USER "'..aau1_res[i].USER_NAME..'"'.." IS '"..aau1_res[i].USER_COMMENT.."';\n")
                                 end
---                              if aau1_res[i].USER_PRIORITY~=null then
---                                      sqlstr_commit()
---                                      if (version_short ~= ('6.0')) and (version_short ~= ('5.0')) then
---                                              sqlstr_add('\t\tGRANT PRIORITY GROUP '..aau1_res[i].USER_PRIORITY..' TO "'..aau1_res[i].USER_NAME..'";\n')
---                                      else
---                                              sqlstr_add('\t\tGRANT PRIORITY '..aau1_res[i].USER_PRIORITY..' TO "'..aau1_res[i].USER_NAME..'";\n')
---                                      end
---                              end
+
+                                -- change V7
+                                if (version_short >= ('7.0')) then
+                                    sqlstr_commit()
+                                    if aau1_res[i].USER_CONSUMER_GROUP~=null then
+                                        sqlstr_add('\t\tALTER USER "'..aau1_res[i].USER_NAME..'" SET CONSUMER_GROUP = '..aau1_res[i].USER_CONSUMER_GROUP..';\n')
+                                    end
+                                 else
+                                    if aau1_res[i].USER_PRIORITY~=null then
+                                        sqlstr_commit()
+                                        if (version_short ~= ('6.0')) and (version_short ~= ('5.0')) then
+                                            sqlstr_add('\t\tGRANT PRIORITY GROUP '..aau1_res[i].USER_PRIORITY..' TO "'..aau1_res[i].USER_NAME..'";\n')
+                                        else
+                                            sqlstr_add('\t\tGRANT PRIORITY '..aau1_res[i].USER_PRIORITY..' TO "'..aau1_res[i].USER_NAME..'";\n')
+                                        end
+                                     end
+                                  end
 
                                 if (version_short ~= ('6.0')) and (version_short ~= ('5.0'))  then
                                         if aau1_res[i].PASSWORD_EXPIRY_POLICY ~= null then
@@ -246,7 +257,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
 
         -- role privileges
 
-        art1_success, art1_res = pquery([[SELECT * FROM EXA_DBA_ROLE_PRIVS WHERE NOT (GRANTEE='SYS' AND GRANTED_ROLE='DBA')]])
+        art1_success, art1_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_ROLE_PRIVS WHERE NOT (GRANTEE='SYS' AND GRANTED_ROLE='DBA')]])
         if not art1_success then
                 error('Error in art1')
         end
@@ -274,7 +285,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
 
         -- system privileges
 
-        art12_success, art12_res = pquery([[SELECT * FROM EXA_DBA_SYS_PRIVS WHERE NOT GRANTEE in ('SYS', 'DBA')]])
+        art12_success, art12_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_SYS_PRIVS WHERE NOT GRANTEE in ('SYS', 'DBA')]])
         if not art12_success then
                 error('Error in art12')
         elseif (#art12_res)>0 then
@@ -292,7 +303,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
         end
 
         -- object privileges
-        art2_success, art2_res = pquery([[SELECT 'GRANT '||PRIVILEGE||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
+        art2_success, art2_res = pquery([[/*snapshot execution*/SELECT 'GRANT '||PRIVILEGE||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
                                         ' TO "'||GRANTEE||'"' grant_text
                                       FROM (select * from EXA_DBA_OBJ_PRIVS where object_type = 'VIEW') op
                                       join (select distinct COLUMN_SCHEMA, COLUMN_TABLE from exa_dba_columns where status is null) cols
@@ -320,7 +331,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
 
         -- connection privileges
 
-        art3_success,art3_res = pquery([[select 'GRANT CONNECTION ' || granted_connection ||' to ' || group_concat('"' || grantee || '"' order by grantee) || case ADMIN_OPTION when 'TRUE' then ' WITH ADMIN OPTION;' else ';' end as expr from exa_dba_connection_privs group by granted_connection, admin_option]])
+        art3_success,art3_res = pquery([[/*snapshot execution*/select 'GRANT CONNECTION ' || granted_connection ||' to ' || group_concat('"' || grantee || '"' order by grantee) || case ADMIN_OPTION when 'TRUE' then ' WITH ADMIN OPTION;' else ';' end as expr from exa_dba_connection_privs group by granted_connection, admin_option]])
         if not art3_success then
                 error('Error in art3.')
         elseif (#art3_res) == 0 then
@@ -341,7 +352,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
         -- impersonation privileges (version >= 6.1)
         if (version_short ~= ('6.0')) and (version_short ~= ('5.0')) then
 
-                art4_success, art4_res = pquery([[SELECT 'GRANT IMPERSONATION ON '|| IMPERSONATION_ON || ' TO ' || GRANTEE || ';' EXPR FROM EXA_DBA_IMPERSONATION_PRIVS]])
+                art4_success, art4_res = pquery([[/*snapshot execution*/SELECT 'GRANT IMPERSONATION ON '|| IMPERSONATION_ON || ' TO ' || GRANTEE || ';' EXPR FROM EXA_DBA_IMPERSONATION_PRIVS]])
 
                 if not art4_success then
                         error('Error in art4: Creating impersonation privileges')
@@ -361,7 +372,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
 end
 
 function change_schema_owners()
-                co1_success, co1_res = pquery([[SELECT * from EXA_SCHEMAS]])
+                co1_success, co1_res = pquery([[/*snapshot execution*/SELECT * from EXA_SCHEMAS]])
 
         if not co1_success then
                 error('Error in co1')
@@ -379,8 +390,13 @@ function change_schema_owners()
                 sqlstr_commit()
                 sqlstr_lf()
                 for i=1, (#co1_res) do
+                  if co1_res[i].SCHEMA_IS_VIRTUAL then
+                        sqlstr_add('\tALTER VIRTUAL SCHEMA "'..co1_res[i].SCHEMA_NAME..'" CHANGE OWNER "'..co1_res[i].SCHEMA_OWNER..'";\n')
+                        sqlstr_commit()
+                  else
                         sqlstr_add('\tALTER SCHEMA "'..co1_res[i].SCHEMA_NAME..'" CHANGE OWNER "'..co1_res[i].SCHEMA_OWNER..'";\n')
                         sqlstr_commit()
+                  end
                 end
                 sqlstr_add('\n')
 --              sqlstr_commit()
@@ -389,8 +405,7 @@ end
 
 function add_all_views_to_DDL()                                 --ADD ALL VIEWS--------------------------------------------------------------------------------------------
 
-                av1_success, av1_res=pquery([[
-WITH
+                av1_success, av1_res=pquery([[/*snapshot execution*/WITH
         all_views AS(
                 with
                         view_dep AS(
@@ -519,7 +534,7 @@ end
 function add_table_to_DDL(schema_name, tbl_name, tbl_comment)   --ADD TABLE-------------------------------------------------------------------------------------------
 
         sqlstr_flush()
-        at1_success, at1_res = pquery([[SELECT * FROM EXA_DBA_COLUMNS WHERE COLUMN_SCHEMA=:s AND COLUMN_TABLE=:t ORDER BY COLUMN_ORDINAL_POSITION]], {s=schema_name, t=tbl_name})
+        at1_success, at1_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_COLUMNS WHERE COLUMN_SCHEMA=:s AND COLUMN_TABLE=:t ORDER BY COLUMN_ORDINAL_POSITION]], {s=schema_name, t=tbl_name})
         if not at1_success then
                 error('Error at at1 -- probably table not found')
         else
@@ -540,9 +555,9 @@ function add_table_to_DDL(schema_name, tbl_name, tbl_comment)   --ADD TABLE-----
                         if not at1_res[i].COLUMN_IS_NULLABLE then                                                                       -- not null
                                 sqlstr_add(' NOT NULL')
                         end
---                      if at1_res[i].COLUMN_COMMENT~=null then
---                              sqlstr_add(' COMMENT IS \''..string.gsub(at1_res[i].COLUMN_COMMENT, "'", "''")..'\'')                                   -- column comment
---                      end
+                        if at1_res[i].COLUMN_COMMENT~=null then
+                                sqlstr_add(' COMMENT IS \''..string.gsub(at1_res[i].COLUMN_COMMENT, "'", "''")..'\'')                                   -- column comment
+                        end
                         if at1_res[i].COLUMN_IS_DISTRIBUTION_KEY == true then
                                 table.insert(distr, {at1_res[i].COLUMN_NAME})
                         end
@@ -557,7 +572,7 @@ function add_table_to_DDL(schema_name, tbl_name, tbl_comment)   --ADD TABLE-----
                 end
 
                 if (version_short ~= ('6.0')) and (version_short ~= ('5.0')) then                                      --partition by
-                        at2_success, at2_res = pquery([[SELECT * FROM EXA_DBA_COLUMNS WHERE COLUMN_SCHEMA=:s AND COLUMN_TABLE=:t AND COLUMN_PARTITION_KEY_ORDINAL_POSITION IS NOT NULL ORDER BY COLUMN_PARTITION_KEY_ORDINAL_POSITION]], {s=schema_name, t=tbl_name})
+                        at2_success, at2_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_COLUMNS WHERE COLUMN_SCHEMA=:s AND COLUMN_TABLE=:t AND COLUMN_PARTITION_KEY_ORDINAL_POSITION IS NOT NULL ORDER BY COLUMN_PARTITION_KEY_ORDINAL_POSITION]], {s=schema_name, t=tbl_name})
                         if not at2_success then
                                 error('Error at at2 -- probably table not found')
                         elseif #at2_res == 0 then
@@ -591,7 +606,7 @@ end
 function add_schemas_constraint_to_DDL(schema_name)     --ADD THE SCHEMA'S CONSTRAINTS--------------------------------------------------------------------------------------------
         sqlstr_flush()
 --      ac1_success, ac1_res = pquery([[SELECT * FROM EXA_DBA_CONSTRAINT_COLUMNS WHERE CONSTRAINT_SCHEMA=:s AND (CONSTRAINT_TYPE='PRIMARY KEY' OR CONSTRAINT_TYPE='FOREIGN KEY') ORDER BY CONSTRAINT_TYPE desc, COLUMN_NAME]], {s=schema_name})
-        ac1_success, ac1_res = pquery([[with sel1 as (
+        ac1_success, ac1_res = pquery([[/*snapshot execution*/with sel1 as (
         select COL.constraint_schema, COL.constraint_table, COL.constraint_type, COL.constraint_name, COL.column_name, AC.constraint_enabled, COL.REFERENCED_SCHEMA, COL.REFERENCED_TABLE, COL.REFERENCED_COLUMN
         from EXA_DBA_constraints AC
         join EXA_DBA_constraint_columns COL
@@ -619,8 +634,8 @@ end -- function
 
 function add_all_constraints_to_DDL()   --ADD ALL CONSTRAINTS--------------------------------------------------------------------------------------------
         sqlstr_flush()
---      aac1_success, aac1_res = pquery([[SELECT * FROM EXA_DBA_CONSTRAINT_COLUMNS WHERE (CONSTRAINT_TYPE='PRIMARY KEY' OR CONSTRAINT_TYPE='FOREIGN KEY') ORDER BY CONSTRAINT_TYPE desc, CONSTRAINT_SCHEMA, COLUMN_NAME]])
-        aac1_success, aac1_res = pquery([[with sel1 as (
+--      aac1_success, aac1_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_CONSTRAINT_COLUMNS WHERE (CONSTRAINT_TYPE='PRIMARY KEY' OR CONSTRAINT_TYPE='FOREIGN KEY') ORDER BY CONSTRAINT_TYPE desc, CONSTRAINT_SCHEMA, COLUMN_NAME]])
+        aac1_success, aac1_res = pquery([[/*snapshot execution*/with sel1 as (
         select COL.constraint_schema, COL.constraint_table, COL.constraint_type, COL.constraint_name, COL.column_name, AC.constraint_enabled, COL.REFERENCED_SCHEMA,  COL.REFERENCED_TABLE, COL.REFERENCED_COLUMN
         from EXA_DBA_constraints AC
         join EXA_DBA_constraint_columns COL
@@ -660,7 +675,7 @@ end
 
 function add_script_to_DDL(schema_name, script_name)                            --ADD SCRIPT-------------------------------------------------------------------------------------------
         sqlstr_flush()
-        as1_success, as1_res = pquery([[SELECT SCRIPT_SCHEMA, SCRIPT_TEXT FROM EXA_DBA_SCRIPTS WHERE SCRIPT_SCHEMA=:ss AND SCRIPT_NAME=:sn]], {ss=schema_name, sn=script_name})
+        as1_success, as1_res = pquery([[/*snapshot execution*/SELECT SCRIPT_SCHEMA, SCRIPT_TEXT FROM EXA_DBA_SCRIPTS WHERE SCRIPT_SCHEMA=:ss AND SCRIPT_NAME=:sn]], {ss=schema_name, sn=script_name})
                 if not as1_success then
                         error('Error at as1')
                 end
@@ -689,7 +704,7 @@ function add_schema_to_DDL(schemaname, schema_comment)          --ADD SCHEMA----
         end
 
         if (version_short ~= ('6.0')) and (version_short ~= ('5.0')) then              -- Add schema size limit
-                ads1_suc, ads1_res = pquery([[SELECT * FROM EXA_DBA_OBJECT_SIZES WHERE OBJECT_TYPE = 'SCHEMA' AND OBJECT_NAME = :s]],{s=schemaname})
+                ads1_suc, ads1_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_OBJECT_SIZES WHERE OBJECT_TYPE = 'SCHEMA' AND OBJECT_NAME = :s]],{s=schemaname})
 
                 if not (ads1_suc) then
                         error('Error checking schema size limit')
@@ -725,7 +740,7 @@ function write_table(p_type_in, p_txt_in)
 end
 
 function add_all_priority_groups()                              -- ADD PRIORITY GROUPS (AFTER VERSION 6.1)
-        aapg1_suc, aapg1_res = pquery([[select * from exa_priority_groups where PRIORITY_GROUP_NAME NOT IN ('HIGH', 'MEDIUM', 'LOW')]])
+        aapg1_suc, aapg1_res = pquery([[/*snapshot execution*/select * from exa_priority_groups where PRIORITY_GROUP_NAME NOT IN ('HIGH', 'MEDIUM', 'LOW')]])
 
         if not (aapg1_suc) then
                 error('ERROR CREATING PRIORITY GROUPS')
@@ -749,7 +764,7 @@ function add_all_priority_groups()                              -- ADD PRIORITY 
 end
 
 function add_system_parameters()                                --ADD SYSTEM PARAMETERS
-        asp1_suc, asp1_res = pquery([[SELECT * FROM EXA_PARAMETERS WHERE SYSTEM_VALUE IS NOT NULL AND PARAMETER_NAME != 'NICE']])
+        asp1_suc, asp1_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_PARAMETERS WHERE SYSTEM_VALUE IS NOT NULL AND PARAMETER_NAME != 'NICE']])
 
         if not (asp1_suc) then
                 error('Error retrieving system parameters')
@@ -773,7 +788,7 @@ function add_system_parameters()                                --ADD SYSTEM PAR
                 end
         end
 
-        asp2_suc, asp2_res = pquery([[SELECT * FROM EXA_PARAMETERS WHERE SESSION_VALUE IS NOT NULL AND PARAMETER_NAME NOT IN ('QUERY_TIMEOUT', 'DEFAULT_PRIORITY_GROUP','DEFAULT_CONSUMER_GROUP','PASSWORD_EXPIRY_POLICY','PASSWORD_SECURITY_POLICY','TEMP_DB_RAM_LIMIT','USER_TEMP_DB_RAM_LIMIT')]])
+        asp2_suc, asp2_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_PARAMETERS WHERE SESSION_VALUE IS NOT NULL AND PARAMETER_NAME NOT IN ('QUERY_TIMEOUT', 'DEFAULT_PRIORITY_GROUP','DEFAULT_CONSUMER_GROUP','PASSWORD_EXPIRY_POLICY','PASSWORD_SECURITY_POLICY','TEMP_DB_RAM_LIMIT','USER_TEMP_DB_RAM_LIMIT')]])
 
         if not (asp2_suc) then
                 error('Error retrieving session parameters')
@@ -795,7 +810,7 @@ function add_system_parameters()                                --ADD SYSTEM PAR
 end
 
 function add_all_virtual_schemas()              -- ADD ALL VIRTUAL SCHEMAS -----------------------------------------------------------------------------------------
-        avs1_success, avs1_res = pquery([[select
+        avs1_success, avs1_res = pquery([[/*snapshot execution*/select
 'CREATE VIRTUAL SCHEMA ' || s.SCHEMA_NAME || ' USING ' || ADAPTER_SCRIPT || '
 WITH
 ' || GROUP_CONCAT(PROPERTY_NAME || ' = ''' || PROPERTY_VALUE || '''' ORDER BY PROPERTY_NAME SEPARATOR '
@@ -829,115 +844,58 @@ group by s.schema_name, adapter_script;]])
         end
 end
 
-function add_all_consumer_groups_v70() -- ADD CONSUMER GROUPS (AFTER VERSION 7.0)
-
-        aacg_suc, aacg_res = pquery([[ SELECT TRIM('CREATE CONSUMER GROUP ' || CONSUMER_GROUP_NAME || ' WITH ' ||
-CASE WHEN CPU_WEIGHT IS NOT NULL THEN
-        'CPU_WEIGHT = ' || CPU_WEIGHT
-        || ','
-END ||
-CASE WHEN PRECEDENCE IS NOT NULL THEN
-         ' PRECEDENCE = ' || PRECEDENCE
-|| ','
-END ||
-CASE WHEN GROUP_TEMP_DB_RAM_LIMIT IS NOT NULL THEN
-         ' GROUP_TEMP_DB_RAM_LIMIT = ' || GROUP_TEMP_DB_RAM_LIMIT
-        || ','
-        END ||
-CASE WHEN USER_TEMP_DB_RAM_LIMIT IS NOT NULL THEN
-         ' USER_TEMP_DB_RAM_LIMIT = ' || USER_TEMP_DB_RAM_LIMIT
-        || ','
-END ||
-CASE WHEN SESSION_TEMP_DB_RAM_LIMIT IS NOT NULL THEN
-         ' SESSION_TEMP_DB_RAM_LIMIT = ' || SESSION_TEMP_DB_RAM_LIMIT
-         || ','
-END , ',') || ';' STMT, CONSUMER_GROUP_NAME, CONSUMER_GROUP_COMMENT
-  FROM  EXA_CONSUMER_GROUPS  WHERE CONSUMER_GROUP_NAME NOT IN ('SYS_CONSUMER_GROUP', 'HIGH','MEDIUM','LOW')]])
-
-if not aacg_suc then
-                error('Error Creating Consumer groups: '..aacg_res.error_message)
-
-                  end
+function add_all_consumer_groups()                              -- ADD CONSUMER GROUPS (AFTER VERSION 7.0)
+        aapg1_suc, aapg1_res = pquery([[/*snapshot execution*/select * from exa_consumer_groups where CONSUMER_GROUP_NAME NOT IN ('HIGH', 'MEDIUM', 'LOW', 'SYS_CONSUMER_GROUP')]])
+        if not (aapg1_suc) then
+                error('ERROR CREATING CONSUMER GROUPS')
+        end
 
         sqlstr_add('-- CONSUMER GROUPS --------------------------------------------------------------------\n')
-        sqlstr_lf()
-        if (#aacg_res) == 0 then
+        sqlstr_lf() 
+        if (#aapg1_res) == 0 then
                 sqlstr_add('\t--no Consumer Groups\n')
         end
-        for i=1,(#aacg_res) do
-                sqlstr_add('\t'..aacg_res[i].STMT..'\n\t\t')
-                if (aacg_res[i].CONSUMER_GROUP_COMMENT ~= NULL) then
-
-                        sqlstr_add('\n\t\tCOMMENT ON CONSUMER GROUP "'..aacg_res[i].CONSUMER_GROUP_NAME..'" IS \''..aacg_res[i].CONSUMER_GROUP_COMMENT..'\'; \n\t\t ')
+        for i=1,(#aapg1_res) do
+                -- mandatory
+                sql_cons_group = '\tCREATE CONSUMER GROUP \"'..aapg1_res[i].CONSUMER_GROUP_NAME..'\" WITH PRECEDENCE = '..aapg1_res[i].PRECEDENCE..' ,CPU_WEIGHT = '..aapg1_res[i].CPU_WEIGHT
+                                              
+                -- optional
+                if (aapg1_res[i].GROUP_TEMP_DB_RAM_LIMIT ~= NULL) then
+                    sql_cons_group = sql_cons_group..' ,GROUP_TEMP_DB_RAM_LIMIT = '..aapg1_res[i].GROUP_TEMP_DB_RAM_LIMIT
+                end
+                if (aapg1_res[i].USER_TEMP_DB_RAM_LIMIT ~= NULL) then
+                    sql_cons_group = sql_cons_group..' ,USER_TEMP_DB_RAM_LIMIT = '..aapg1_res[i].USER_TEMP_DB_RAM_LIMIT
+                end
+                if (aapg1_res[i].SESSION_TEMP_DB_RAM_LIMIT ~= NULL) then
+                    sql_cons_group = sql_cons_group..' ,SESSION_TEMP_DB_RAM_LIMIT = '..aapg1_res[i].SESSION_TEMP_DB_RAM_LIMIT
+                end
+                
+                -- new in V7.1
+                if (version_short >= ('7.1')) then
+                   if (aapg1_res[i].IDLE_TIMEOUT ~= NULL) then
+                       sql_cons_group = sql_cons_group..' ,IDLE_TIMEOUT = '..aapg1_res[i].IDLE_TIMEOUT
+                   end
+                   if (aapg1_res[i].QUERY_TIMEOUT ~= NULL) then
+                       sql_cons_group = sql_cons_group..' ,QUERY_TIMEOUT = '..aapg1_res[i].QUERY_TIMEOUT
+                   end
+                end
+                
+                sql_cons_group = sql_cons_group..'; \n\t\t'
+                sqlstr_add(sql_cons_group)
+                
+                if (aapg1_res[i].CONSUMER_GROUP_COMMENT ~= NULL) then
+                        sqlstr_add('\n\t\tCOMMENT ON CONSUMER GROUP "'..aapg1_res[i].CONSUMER_GROUP_NAME..'" IS \''..aapg1_res[i].CONSUMER_GROUP_COMMENT..'\'; \n\t\t ')
                 else
                         sqlstr_add('\n\n')
                 end
                 sqlstr_commit()
-        end
-
-
+         end
 end
 
-function add_all_consumer_groups_v71() -- ADD CONSUMER GROUPS (AFTER VERSION 7.0)
-
-        aacg_suc, aacg_res = pquery([[ SELECT TRIM('CREATE CONSUMER GROUP ' || CONSUMER_GROUP_NAME || ' WITH ' ||
-CASE WHEN CPU_WEIGHT IS NOT NULL THEN
-        'CPU_WEIGHT = ' || CPU_WEIGHT
-        || ','
-END ||
-CASE WHEN PRECEDENCE IS NOT NULL THEN
-         ' PRECEDENCE = ' || PRECEDENCE
-|| ','
-END ||
-CASE WHEN GROUP_TEMP_DB_RAM_LIMIT IS NOT NULL THEN
-         ' GROUP_TEMP_DB_RAM_LIMIT = ' || GROUP_TEMP_DB_RAM_LIMIT
-        || ','
-        END ||
-CASE WHEN USER_TEMP_DB_RAM_LIMIT IS NOT NULL THEN
-         ' USER_TEMP_DB_RAM_LIMIT = ' || USER_TEMP_DB_RAM_LIMIT
-        || ','
-END ||
-CASE WHEN SESSION_TEMP_DB_RAM_LIMIT IS NOT NULL THEN
-         ' SESSION_TEMP_DB_RAM_LIMIT = ' || SESSION_TEMP_DB_RAM_LIMIT
-         || ','
-END ||
-CASE WHEN IDLE_TIMEOUT IS NOT NULL THEN
-         ' IDLE_TIMEOUT = ' || IDLE_TIMEOUT
-         || ','
-END ||
-CASE WHEN QUERY_TIMEOUT IS NOT NULL THEN
-         ' QUERY_TIMEOUT = ' || QUERY_TIMEOUT
-         || ','
-END , ',') || ';' STMT, CONSUMER_GROUP_NAME, CONSUMER_GROUP_COMMENT
-  FROM  EXA_CONSUMER_GROUPS  WHERE CONSUMER_GROUP_NAME NOT IN ('SYS_CONSUMER_GROUP', 'HIGH','MEDIUM','LOW')]])
-
-if not aacg_suc then
-                error('Error Creating Consumer groups: '..aacg_res.error_message)
-
-                  end
-
-        sqlstr_add('-- CONSUMER GROUPS --------------------------------------------------------------------\n')
-        sqlstr_lf()
-        if (#aacg_res) == 0 then
-                sqlstr_add('\t--no Consumer Groups\n')
-        end
-        for i=1,(#aacg_res) do
-                sqlstr_add('\t'..aacg_res[i].STMT..'\n\t\t')
-                if (aacg_res[i].CONSUMER_GROUP_COMMENT ~= NULL) then
-
-                        sqlstr_add('\n\t\tCOMMENT ON CONSUMER GROUP "'..aacg_res[i].CONSUMER_GROUP_NAME..'" IS \''..aacg_res[i].CONSUMER_GROUP_COMMENT..'\'; \n\t\t ')
-                else
-                        sqlstr_add('\n\n')
-                end
-                sqlstr_commit()
-        end
-
-
-end
 
 -- MAIN --------------------------------------------------------------------------------------------------------------------------------------------
 -- Check if the user has SELECT ANY DICTIONARY privilege:
-        privsuc, privcheck = pquery([[SELECT * FROM EXA_DBA_USERS LIMIT 1]])
+        privsuc, privcheck = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_USERS LIMIT 1]])
 
         if not (privsuc) then
                 error('The User does not have SELECT ANY DICTIONARY privileges')
@@ -962,7 +920,7 @@ if store_in_table == true then
                         error('error in create DDL schema')
                 end
         else
-                checkschemsucc,checkschemres = pquery([[SELECT SCHEMA_NAME FROM EXA_SCHEMAS WHERE SCHEMA_NAME = 'DB_HISTORY']])
+                checkschemsucc,checkschemres = pquery([[/*snapshot execution*/SELECT SCHEMA_NAME FROM EXA_SCHEMAS WHERE SCHEMA_NAME = 'DB_HISTORY']])
 
                 if not (checkschemsucc) then
                         error('Error checking for DB_HISTORY schema')
@@ -975,7 +933,7 @@ if store_in_table == true then
                 end
 
                 if (cschemsucc) then
-                        ctabchecksuc, ctabcheckres = pquery([[SELECT TABLE_NAME FROM EXA_DBA_TABLES WHERE TABLE_SCHEMA='DB_HISTORY' AND TABLE_NAME='DATABASE_DDL';]])
+                        ctabchecksuc, ctabcheckres = pquery([[/*snapshot execution*/SELECT TABLE_NAME FROM EXA_DBA_TABLES WHERE TABLE_SCHEMA='DB_HISTORY' AND TABLE_NAME='DATABASE_DDL';]])
 
                         if not (ctabchecksuc) then
                                 error('Error checking for Database_ddl table')
@@ -998,7 +956,7 @@ if store_in_table == true then
         end
 end
 
-t=query([[SELECT CURRENT_USER,CURRENT_TIMESTAMP]])
+t=query([[/*snapshot execution*/SELECT CURRENT_USER,CURRENT_TIMESTAMP]])
 
 constraints_separately = true
 return_in_one_row = true
@@ -1035,12 +993,11 @@ if add_user_structure then
                 write_table('PRIORTY GROUPS', ddl)
         elseif (version_short == ('6.0') or version_short == ('5.0')) then
               a=1
-        elseif (version_short == ('7.0')) then
-              add_all_consumer_groups_v70()
+        elseif (version_short >= ('7.0')) then
+              add_all_consumer_groups()
               write_table('CONSUMER GROUPS',ddl)
         else
-              add_all_consumer_groups_v71()
-              write_table('CONSUMER GROUPS',ddl)
+              a=1
         end
         add_all_roles()
         write_table('ROLES',ddl)
@@ -1053,7 +1010,7 @@ if version_short == '5.0' then
         m1_success, m1_res = pquery([[select OBJECT_NAME, OBJECT_COMMENT from EXA_DBA_OBJECTS WHERE OBJECT_TYPE = 'SCHEMA' ORDER BY 'OBJECT_NAME']])
 else
 
-        m1_success, m1_res = pquery([[select OBJECT_NAME, OBJECT_COMMENT from EXA_DBA_OBJECTS WHERE OBJECT_TYPE = 'SCHEMA' AND OBJECT_IS_VIRTUAL IS FALSE ORDER BY 'OBJECT_NAME']])
+        m1_success, m1_res = pquery([[/*snapshot execution*/select OBJECT_NAME, OBJECT_COMMENT from EXA_DBA_OBJECTS WHERE OBJECT_TYPE = 'SCHEMA' AND OBJECT_IS_VIRTUAL IS FALSE ORDER BY 'OBJECT_NAME']])
 end
 if not m1_success then
         error('Error at m1')
@@ -1061,7 +1018,7 @@ else
         for i=1,(#m1_res) do -- iterate through all schemas
                 add_schema_to_DDL(m1_res[i].OBJECT_NAME, m1_res[i].OBJECT_COMMENT)
 
-                m2_success, m2_res = pquery([[select table_schema,table_name,table_comment from EXA_DBA_TABLES WHERE TABLE_SCHEMA=:s ORDER BY TABLE_NAME]], {s = m1_res[i].OBJECT_NAME})
+                m2_success, m2_res = pquery([[/*snapshot execution*/select table_schema,table_name,table_comment from EXA_DBA_TABLES WHERE TABLE_SCHEMA=:s ORDER BY TABLE_NAME]], {s = m1_res[i].OBJECT_NAME})
                 if not m2_success then
                         error('Error at m2')
                 else
@@ -1073,7 +1030,7 @@ else
                         end -- if
                 end     -- else (tables)
                                                                         -- add all functions to the schema
-                m21_success, m21_res=pquery([[SELECT FUNCTION_NAME, 'CREATE ' ||
+                m21_success, m21_res=pquery([[/*snapshot execution*/SELECT FUNCTION_NAME, 'CREATE ' ||
         FUNCTION_TEXT || case
                 when
                         substr(
@@ -1113,7 +1070,7 @@ FROM
                         end -- for
                 end --else
                                                                 -- get all script names of the current schema
-                m4_success, m4_res=pquery([[SELECT SCRIPT_SCHEMA,SCRIPT_NAME FROM EXA_DBA_SCRIPTS WHERE SCRIPT_SCHEMA=:s]],{s = m1_res[i].OBJECT_NAME})
+                m4_success, m4_res=pquery([[/*snapshot execution*/SELECT SCRIPT_SCHEMA,SCRIPT_NAME FROM EXA_DBA_SCRIPTS WHERE SCRIPT_SCHEMA=:s]],{s = m1_res[i].OBJECT_NAME})
                 if not m4_success then
                         error('Error at m3')
                 end -- if
@@ -1122,31 +1079,31 @@ FROM
                 end -- for (scripts)
 
     write_table('SCHEMA', ddl)
-        end --for (schemas)
+    end --for (schemas)
 
     -- add all views
     add_all_views_to_DDL()
     write_table('VIEWS',ddl)
 
+    -- add all connections
+    add_all_connections()
+    write_table('CONNECTIONS',ddl)
+
     --add all virtual schemas
-        if version_short ~= '5.0' then
-                add_all_virtual_schemas()
-                write_table('VIRTUAL SCHEMAS', ddl)
-        end
+    if version_short ~= '5.0' then
+      add_all_virtual_schemas()
+      write_table('VIRTUAL SCHEMAS', ddl)
+    end
 
-        if constraints_separately==true then
-        -- add all constraints
-                add_all_constraints_to_DDL()
-        write_table('CONSTRAINTS',ddl)
-        end
-
-        -- add all connections
-        add_all_connections()
-        write_table('CONNECTIONS',ddl)
+    if constraints_separately==true then
+      -- add all constraints
+      add_all_constraints_to_DDL()
+      write_table('CONSTRAINTS',ddl)
+    end
 
         if add_user_structure then
-                change_schema_owners()
-        write_table('SCHEMA OWNERS',ddl)
+          change_schema_owners()
+          write_table('SCHEMA OWNERS',ddl)
         end
 
         if add_rights then
