@@ -280,3 +280,14 @@ EXECUTE SCRIPT EXA_TOOLBOX.GENERATE_VIEW (  'RETAIL' -- original schema
 
 ```
 
+## open_transactions
+DB versions up to 7.0:
+  * [open_transactions_leq_DBv70.sql](open_transactions_leq_DBv70.sql)
+
+DB versions starting from 7.1:
+  * [open_transactions_geq_DBv71.sql](open_transactions_geq_DBv71.sql)
+
+The query to obtain information about read and write locks held by open sessions.
+For more information on the usage of the script, please view the below community article:
+
+[How to determine idle sessions with open transactions](https://community.exasol.com/t5/database-features/how-to-determine-idle-sessions-with-open-transactions/ta-p/1238)

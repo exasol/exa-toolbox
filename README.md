@@ -54,5 +54,6 @@ The EXA-toolbox is a collection of useful scripts and views that you can add to 
   * [create_db_ddl](utilities/README.md#create_db_ddl)
   * [3rdLevelStatistics](utilities/README.md#3rdLevelStatistics)
   * [Union_All_Optimization_-_generate_view](utilities/README.md#Union_All_Optimization_-_generate_view)
+  * [open_transactions](utilities/README.md#open_transactions)
 - [Preprocessing](preprocessing)
 

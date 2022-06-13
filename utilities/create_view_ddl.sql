@@ -226,7 +226,7 @@ function add_function( function_schema, function_name )
 end
 
 
--- add definition of a single function to output
+-- add definition of a single script to output
 function add_script( script_schema, script_name )
 	local as1_success, as1_res = pquery([[
 			SELECT SCRIPT_SCHEMA, SCRIPT_TEXT
