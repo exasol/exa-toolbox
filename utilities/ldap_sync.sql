@@ -6,6 +6,9 @@ and grant permissions. When users are removed from the group in LDAP, the users 
 For more information, please see the below community article:
 https://community.exasol.com/t5/database-features/synchronization-of-ldap-active-directory-groups-and-members-to/ta-p/1686
 
+Version 2.2:
+ - Extended the length of the VARCHAR column definitions to be able to query larger AD's
+
 Version 2.1:
  - Re-arranged order of setting ldap parameters and binding based on https://www.python-ldap.org/en/python-ldap-3.3.0/reference/ldap.html
 
@@ -28,7 +31,7 @@ Changes in this version:
 
 --This script will search for the specified attribute on the given distinguished name
 --/
-CREATE OR REPLACE PYTHON SCALAR SCRIPT EXA_TOOLBOX."GET_AD_ATTRIBUTE" ("LDAP_CONNECTION" VARCHAR(2000),"SEARCH_STRING" VARCHAR(2000) UTF8, "ATTR"  VARCHAR(1000)) EMITS ("SEARCH_STRING" VARCHAR(2000) UTF8, "ATTR" VARCHAR(1000), "VAL" VARCHAR(1000) UTF8) AS
+CREATE OR REPLACE PYTHON SCALAR SCRIPT EXA_TOOLBOX."GET_AD_ATTRIBUTE" ("LDAP_CONNECTION" VARCHAR(20000),"SEARCH_STRING" VARCHAR(20000) UTF8, "ATTR"  VARCHAR(10000)) EMITS ("SEARCH_STRING" VARCHAR(20000) UTF8, "ATTR" VARCHAR(10000), "VAL" VARCHAR(10000) UTF8) AS
 import ldap
 
 def run(ctx):
@@ -81,7 +84,7 @@ def run(ctx):
 -- To find out which attributes contain the username, you can run this: select EXA_TOOLBOX.LDAP_HELPER('LDAP_SERVER', user_name) from exa_dba_connections WHERE connection_name = 'LDAP_SERVER'; 
 -- For other purposes, you can run the script using the LDAP connection you created and the distinguished name of the object you want to investigate: SELECT EXA_TOOLBOX.LDAP_HELPER(<LDAP connection>,<distinguished name>);
 --/
-CREATE OR REPLACE PYTHON SCALAR SCRIPT EXA_TOOLBOX."LDAP_HELPER" ("LDAP_CONNECTION" VARCHAR(2000),"SEARCH_STRING" VARCHAR(2000) UTF8) EMITS ("SEARCH_STRING" VARCHAR(2000) UTF8, "ATTR" VARCHAR(1000), "VAL" VARCHAR(1000) UTF8) AS
+CREATE OR REPLACE PYTHON SCALAR SCRIPT EXA_TOOLBOX."LDAP_HELPER" ("LDAP_CONNECTION" VARCHAR(20000),"SEARCH_STRING" VARCHAR(20000) UTF8) EMITS ("SEARCH_STRING" VARCHAR(20000) UTF8, "ATTR" VARCHAR(10000), "VAL" VARCHAR(10000) UTF8) AS
 
 
 import ldap
