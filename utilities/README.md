@@ -294,4 +294,4 @@ For more information on the usage of the script, please view the below community
 [How to determine idle sessions with open transactions](https://community.exasol.com/t5/database-features/how-to-determine-idle-sessions-with-open-transactions/ta-p/1238)
 
 ## confd_xmlrpc
-You can use the [confd_xmlrpc.py](confd_xmlrpc.py) script to interact with ConfD using XMLRPC. For more details about ConfD, see the documentation.
+You can use the [confd_xmlrpc.py](confd_xmlrpc.py) script to interact with ConfD using XMLRPC. ConfD is primarily used beginning with Exasol version 8
