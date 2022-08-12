@@ -6,6 +6,7 @@
   * [bucketfs_ls](#bucketfs_ls)
   * [check_connectivity](#check_connectivity)
   * [check_tcp_listener_connection](#check_tcp_listener_connection)
+  * [confd_xmlrpc](#confd_xmlrpc)
   * [upload_github_release_file_to_bucketfs](#upload_github_release_file_to_bucketfs)
   * [language_info](#language_info)
   * [number_of_cores](#number_of_cores)
@@ -291,3 +292,6 @@ The query to obtain information about read and write locks held by open sessions
 For more information on the usage of the script, please view the below community article:
 
 [How to determine idle sessions with open transactions](https://community.exasol.com/t5/database-features/how-to-determine-idle-sessions-with-open-transactions/ta-p/1238)
+
+## confd_xmlrpc
+You can use the [confd_xmlrpc.py](confd_xmlrpc.py) script to interact with ConfD using XMLRPC. ConfD is primarily used beginning with Exasol version 8
