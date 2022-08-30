@@ -66,6 +66,7 @@ CHANGE LOG:
         - Format. Removed blank lines. Adjust Tab and spaces
 2019-03-22
         - Added handling of DDL that was over 2 million characters
+        - Fixed bug regarding empty connection strings in connection objects
 2021
         - Added consumer groups (v7.0)
 2021-10-07
@@ -76,6 +77,13 @@ CHANGE LOG:
         - Changed add_script according to community request (handle duplicate names)
 2022-01-07
         - Added snapshot execution (for 6.2 and 7.0 users)
+2022-08-30
+        - Improved delimitation of identifiers
+		- Added support for OpenID users
+		- Simplified some queries and replaced some loops with Lua's 1
+		- Accounted the split of EXA_DBA_VIRTUAL_SCHEMA.ADAPTER_SCRIPT column in 8.0
+		- Fixed schemas order
+		- Changed backup format from .csv to .csv.gz
 */
 
 -- sqlstring concatination
@@ -85,8 +93,8 @@ function check_version()
         if not (version_suc) then
                 error('error determining version')
         else
-                version_short = version[1][1]
-                version_full = version[1][2]
+                version_short = version[1].VERSION_NUMBER
+                version_full = version[1].VERSION_FULL
         end
 end
 
@@ -129,7 +137,7 @@ end
 
 function add_all_connections()                  -- ADD ALL CONNECTIONS -------------------------------------------------------------------------------------
 
-        ac1_success,ac1_res = pquery([[/*snapshot execution*/select CONNECTION_NAME, CASE WHEN CONNECTION_STRING IS NOT NULL THEN CONNECTION_STRING  ELSE ' ' end CONNECTION_STRING,
+        ac1_success,ac1_res = pquery([[/*snapshot execution*/select CONNECTION_NAME, nvl(CONNECTION_STRING, ' ') as CONNECTION_STRING,
         USER_NAME, CREATED, CONNECTION_COMMENT  from EXA_DBA_CONNECTIONS]])
         if not ac1_success then
                 error('Error at ac1')
@@ -140,7 +148,7 @@ function add_all_connections()                  -- ADD ALL CONNECTIONS ---------
 --              sqlstr_add('\t--no connections specified\n')
 --      end
         for i=1,(#ac1_res) do
-                sqlstr_add('\tCREATE CONNECTION '..ac1_res[i].CONNECTION_NAME..' \n\t\tTO \''..ac1_res[i].CONNECTION_STRING..'\'')
+                sqlstr_add('\tCREATE CONNECTION "'..ac1_res[i].CONNECTION_NAME..'" \n\t\tTO \''..ac1_res[i].CONNECTION_STRING..'\'')
                 if (ac1_res[i].USER_NAME ~= NULL) then
                         sqlstr_add('\n\t\tUSER \''..ac1_res[i].USER_NAME..'\' \n\t\t IDENTIFIED BY \'\';\n\n')
 
@@ -199,16 +207,18 @@ function add_all_users()                                        -- ADD ALL USERS
                         if aau1_res[i].USER_NAME ~= 'SYS' then
                                 sqlstr_add('\tCREATE USER "'..aau1_res[i].USER_NAME..'\"')
                                 if aau1_res[i].DISTINGUISHED_NAME~=null then  -- if LDAP info given, create username with ldap, otherwise use password
-                                        ldap_string = (string.gsub(aau1_res[i].DISTINGUISHED_NAME, "'", "''"))
-                                        sqlstr_add(' identified at ldap as \''..ldap_string..'\' force;\n')
-                                elseif (aau1_res[i].KERBEROS_PRINCIPAL) then  -- if Kerberos info given, include Kerberos information
-                                        if (aau1_res[i].KERBEROS_PRINCIPAL)~=null then
-                                                sqlstr_add(' IDENTIFIED BY KERBEROS PRINCIPAL \''..aau1_res[i].KERBEROS_PRINCIPAL..'\';\n')
-                                        else
-                                                sqlstr_add(' identified by "Start123";\n')
-                                        end
+									ldap_string = (string.gsub(aau1_res[i].DISTINGUISHED_NAME, "'", "''"))
+									sqlstr_add(' IDENTIFIED AT LDAP AS \''..ldap_string..'\' FORCE;\n')
+                                elseif (aau1_res[i].KERBEROS_PRINCIPAL)~=null then  -- if Kerberos info given, include Kerberos information
+									sqlstr_add(' IDENTIFIED BY KERBEROS PRINCIPAL \''..aau1_res[i].KERBEROS_PRINCIPAL..'\';\n')
+								elseif (version_short >= ('7.1')) then
+									if (aau1_res[i].OPENID_SUBJECT)~=null then  -- if OpenID info given, include OpenID information
+										sqlstr_add(' IDENTIFIED BY OPENID SUBJECT \''..aau1_res[i].OPENID_SUBJECT..'\';\n')
+									else
+										sqlstr_add(' IDENTIFIED BY "Start123";\n')
+									end
                                 else
-                                       sqlstr_add(' identified by "Start123";\n')
+                                       sqlstr_add(' IDENTIFIED BY "Start123";\n')
 
                                 end
                                 if aau1_res[i].USER_COMMENT ~= NULL then
@@ -220,7 +230,7 @@ function add_all_users()                                        -- ADD ALL USERS
                                 if (version_short >= ('7.0')) then
                                     sqlstr_commit()
                                     if aau1_res[i].USER_CONSUMER_GROUP~=null then
-                                        sqlstr_add('\t\tALTER USER "'..aau1_res[i].USER_NAME..'" SET CONSUMER_GROUP = '..aau1_res[i].USER_CONSUMER_GROUP..';\n')
+                                        sqlstr_add('\t\tALTER USER "'..aau1_res[i].USER_NAME..'" SET CONSUMER_GROUP = "'..aau1_res[i].USER_CONSUMER_GROUP..'";\n')
                                     end
                                  else
                                     if aau1_res[i].USER_PRIORITY~=null then
@@ -264,10 +274,10 @@ function add_all_rights()                                       -- ADD ALL RIGHT
         sqlstr_flush()
         sqlstr_add('-- RIGHTS --------------------------------------------------------------------\n')
         sqlstr_lf()
-  sqlstr_commit()
+  		sqlstr_commit()
         sqlstr_add('\t--Please note that the grantor & owner of all grants will be the user who runs the script!\n')
         sqlstr_lf()
-    sqlstr_commit()
+		sqlstr_commit()
         if (#art1_res) >0 then
                 for i=1,(#art1_res) do
                         sqlstr_add('\tGRANT "'..art1_res[i].GRANTED_ROLE..'" TO "'..art1_res[i].GRANTEE..'"')
@@ -314,13 +324,13 @@ function add_all_rights()                                       -- ADD ALL RIGHT
                                       FROM EXA_DBA_OBJ_PRIVS where object_type <> 'VIEW']])
 
         if not art2_success then
-                error('Error in art2 '..art2_res.statement_text)
+                error('Error in art2')
         elseif (#art2_res)>0 then
                 sqlstr_flush()
                 for i=1,(#art2_res)     do
-            sqlstr_add('\t'..art2_res[i].GRANT_TEXT..';\n')
-            sqlstr_add('\n')
-                        sqlstr_commit()
+					sqlstr_add('\t'..art2_res[i].GRANT_TEXT..';\n')
+					sqlstr_add('\n')
+					sqlstr_commit()
                 end
         elseif (#art2_res)==0 then
                 sqlstr_flush()
@@ -331,7 +341,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
 
         -- connection privileges
 
-        art3_success,art3_res = pquery([[/*snapshot execution*/select 'GRANT CONNECTION ' || granted_connection ||' to ' || group_concat('"' || grantee || '"' order by grantee) || case ADMIN_OPTION when 'TRUE' then ' WITH ADMIN OPTION;' else ';' end as expr from exa_dba_connection_privs group by granted_connection, admin_option]])
+        art3_success,art3_res = pquery([[/*snapshot execution*/select 'GRANT CONNECTION "' || granted_connection ||'" to ' || group_concat('"' || grantee || '"' order by grantee) || case ADMIN_OPTION when 'TRUE' then ' WITH ADMIN OPTION;' else ';' end as expr from exa_dba_connection_privs group by granted_connection, admin_option]])
         if not art3_success then
                 error('Error in art3.')
         elseif (#art3_res) == 0 then
@@ -350,9 +360,9 @@ function add_all_rights()                                       -- ADD ALL RIGHT
         end
 
         -- impersonation privileges (version >= 6.1)
-        if (version_short ~= ('6.0')) and (version_short ~= ('5.0')) then
+        if (version_short >= ('6.1')) then
 
-                art4_success, art4_res = pquery([[/*snapshot execution*/SELECT 'GRANT IMPERSONATION ON '|| IMPERSONATION_ON || ' TO ' || GRANTEE || ';' EXPR FROM EXA_DBA_IMPERSONATION_PRIVS]])
+                art4_success, art4_res = pquery([[/*snapshot execution*/SELECT 'GRANT IMPERSONATION ON "'|| IMPERSONATION_ON || '" TO "' || GRANTEE || '";' EXPR FROM EXA_DBA_IMPERSONATION_PRIVS]])
 
                 if not art4_success then
                         error('Error in art4: Creating impersonation privileges')
@@ -380,7 +390,7 @@ function change_schema_owners()
                 sqlstr_flush()
                 sqlstr_lf()
                 sqlstr_add('-- CHANGE SCHEMA OWNERS -----------------------------------------------------------------\n')
-                sqlstr_add('\t -- All schemas owned by current user')
+                sqlstr_add('\t -- No user schemas in the database')
                 sqlstr_commit()
                 sqlstr_lf()
         elseif (#co1_res)>0 then
@@ -454,33 +464,9 @@ SELECT
         view_schema,
         scope_schema,
         view_name,
-        case
-                when
-                        substr(
-                                rtrim(
-                                        rtrim(
-                                                REGEXP_REPLACE(view_text, '[' || CHR(9) || CHR(10) || CHR(13) || ']'),
-                                                ' '
-                                        ),
-                                        ' '
-                                ),
-                                length(
-                                        rtrim(
-                                                REGEXP_REPLACE(
-                                                        view_text,
-                                                        '[' || CHR(9) || CHR(10) || CHR(13) || ']'
-                                                ),
-                                                ' '
-                                        )
-                                ),
-                                1
-                        ) <> ';'
-                then
-                  view_text || CHR(13) || CHR(10) || ';'
-                else
-                  REGEXP_REPLACE(view_text,';',CHR(13)||CHR(10)||';',length(view_text)-10)  
-        end as view_text,
-        count(view_name) as count
+        rtrim(view_text, CHR(9) || CHR(10) || CHR(13))
+        || CHR(13) || CHR(10) || ';'as view_text,
+        count(view_name) as view_count
 FROM
         all_views
 GROUP BY
@@ -489,7 +475,7 @@ GROUP BY
         view_name,
         view_text
 ORDER BY
-        count,
+        view_count,
         view_schema,
         view_name;
 ]])
@@ -556,42 +542,33 @@ function add_table_to_DDL(schema_name, tbl_name, tbl_comment)   --ADD TABLE-----
                                 sqlstr_add(' NOT NULL')
                         end
                         if at1_res[i].COLUMN_COMMENT~=null then
-                                sqlstr_add(' COMMENT IS \''..string.gsub(at1_res[i].COLUMN_COMMENT, "'", "''")..'\'')                                   -- column comment
+                                sqlstr_add([[ COMMENT IS ']]..string.gsub(at1_res[i].COLUMN_COMMENT, [[']], [['']])..[[']])                                   -- column comment
                         end
                         if at1_res[i].COLUMN_IS_DISTRIBUTION_KEY == true then
-                                table.insert(distr, {at1_res[i].COLUMN_NAME})
+                                table.insert(distr, '"'..at1_res[i].COLUMN_NAME..'"')
                         end
                 end --for
-                if #distr >= 1  then
-                        sqlstr_add(',\n\t\tDISTRIBUTE BY "'..distr[1][1]..'"')
-                end
-                if #distr > 1 then                                                                                                      --      distribute by
-                        for k=2,(#distr) do
-                                sqlstr_add(', "'..distr[k][1]..'" ')
-                        end
+                
+                if #distr > 0 then
+                	sqlstr_add(',\n\t\tDISTRIBUTE BY '..table.concat(distr, ', '))
                 end
 
                 if (version_short ~= ('6.0')) and (version_short ~= ('5.0')) then                                      --partition by
                         at2_success, at2_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_COLUMNS WHERE COLUMN_SCHEMA=:s AND COLUMN_TABLE=:t AND COLUMN_PARTITION_KEY_ORDINAL_POSITION IS NOT NULL ORDER BY COLUMN_PARTITION_KEY_ORDINAL_POSITION]], {s=schema_name, t=tbl_name})
                         if not at2_success then
                                 error('Error at at2 -- probably table not found')
-                        elseif #at2_res == 0 then
+                        elseif #at2_res > 0 then
 
-                        else
+							
                                 for p=1,#at2_res do
-                                        table.insert(part, at2_res[p].COLUMN_NAME)
-                                end
-
-                        end
-
-                        if #part >= 1 then
-                                sqlstr_add(', \n\t\tPARTITION BY "'..part[1]..'"')
-                        end
-                        if #part > 1 then
-                                for x=2, (#part) do
-                                        sqlstr_add(', "'..part[x]..'"')
+                                        table.insert(part, '"'..at2_res[p].COLUMN_NAME..'"')
                                 end
                         end
+                        
+                        if #part > 0 then
+                        	sqlstr_add(', \n\t\tPARTITION BY '..table.concat(part, ', '))
+                        end
+
                 end
                 sqlstr_add(' )')
                 if tbl_comment ~= null then                                                                                                             -- table comment
@@ -616,7 +593,7 @@ from sel1  where constraint_schema=:s AND (CONSTRAINT_TYPE='PRIMARY KEY' OR CONS
 group by  constraint_schema, constraint_table, constraint_type, constraint_name, constraint_enabled, REFERENCED_TABLE, REFERENCED_SCHEMA
 order by constraint_type desc, constraint_table]], {s=schema_name})
         if not ac1_success then
-                error('Error in ac1'..aac1_res.statement_text)
+                error('Error in ac1')
         else
                 for i=1,(#ac1_res) do
                         if ac1_res[i].CONSTRAINT_TYPE=='PRIMARY KEY' then
@@ -632,7 +609,7 @@ order by constraint_type desc, constraint_table]], {s=schema_name})
 
 end -- function
 
-function add_all_constraints_to_DDL()   --ADD ALL CONSTRAINTS--------------------------------------------------------------------------------------------
+function add_all_constraints_to_DDL(only_cross_schema)   --ADD ALL CONSTRAINTS--------------------------------------------------------------------------------------------
         sqlstr_flush()
 --      aac1_success, aac1_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_CONSTRAINT_COLUMNS WHERE (CONSTRAINT_TYPE='PRIMARY KEY' OR CONSTRAINT_TYPE='FOREIGN KEY') ORDER BY CONSTRAINT_TYPE desc, CONSTRAINT_SCHEMA, COLUMN_NAME]])
         aac1_success, aac1_res = pquery([[/*snapshot execution*/with sel1 as (
@@ -642,11 +619,12 @@ function add_all_constraints_to_DDL()   --ADD ALL CONSTRAINTS-------------------
         on AC.constraint_name=COL.constraint_name and AC.CONSTRAINT_SCHEMA = COL.CONSTRAINT_SCHEMA and AC.CONSTRAINT_TABLE = COL.CONSTRAINT_TABLE)
 select constraint_schema, constraint_table, constraint_type, constraint_name, constraint_enabled, REFERENCED_TABLE, REFERENCED_SCHEMA, group_concat(column_name separator '","') column_names, group_concat(REFERENCED_COLUMN separator '","') REFERENCED_COLUMNS
 from sel1  where (CONSTRAINT_TYPE='PRIMARY KEY' OR CONSTRAINT_TYPE='FOREIGN KEY')
+and (constraint_schema <> REFERENCED_SCHEMA or :only_cs)
 group by  constraint_schema, constraint_table, constraint_type, constraint_name, constraint_enabled, REFERENCED_TABLE, REFERENCED_SCHEMA
-order by constraint_type desc,constraint_schema, constraint_table]])
+order by constraint_type desc,constraint_schema, constraint_table]], {only_cs=only_cross_schema})
 
         if not aac1_success then
-                error('Error in aac1'..aac1_res.statement_text)
+                error('Error in aac1')
         else
                                 sqlstr_add('-- ALL CONSTRAINTS ---------------------------------------------------------------------------------\n')
                                 sqlstr_lf()
@@ -684,7 +662,7 @@ function add_script_to_DDL(schema_name, script_name)                            
         sqlstr_commit()
         sqlstr_add('\nOPEN SCHEMA \"'..schema_name..'\";')    --Open schema to create the script
         sqlstr_commit()
-        sqlstr_add('\n--/\n'..as1_res[1][2]..'\n/')
+        sqlstr_add('\n--/\n'..as1_res[1].SCRIPT_TEXT..'\n/')
         sqlstr_commit()
         sqlstr_add('\nCLOSE SCHEMA;')
         sqlstr_commit()
@@ -810,17 +788,33 @@ function add_system_parameters()                                --ADD SYSTEM PAR
 end
 
 function add_all_virtual_schemas()              -- ADD ALL VIRTUAL SCHEMAS -----------------------------------------------------------------------------------------
-        avs1_success, avs1_res = pquery([[/*snapshot execution*/select
-'CREATE VIRTUAL SCHEMA ' || s.SCHEMA_NAME || ' USING ' || ADAPTER_SCRIPT || '
+		if (version_short >='8.0') then
+			avs1_success, avs1_res = pquery([[/*snapshot execution*/select
+'CREATE VIRTUAL SCHEMA "' || s.SCHEMA_NAME || '" USING "' || ADAPTER_SCRIPT_SCHEMA || '"."' || ADAPTER_SCRIPT_NAME || '"
 WITH
 ' || GROUP_CONCAT(PROPERTY_NAME || ' = ''' || PROPERTY_VALUE || '''' ORDER BY PROPERTY_NAME SEPARATOR '
 ') || ';
-' AS 'TEXT'
+' AS TEXT
 from
-EXA_VIRTUAL_SCHEMAS s
+EXA_DBA_VIRTUAL_SCHEMAS s
 join
-EXA_ALL_VIRTUAL_SCHEMA_PROPERTIES p using (schema_object_id)
+EXA_DBA_VIRTUAL_SCHEMA_PROPERTIES p on s.SCHEMA_NAME=p.SCHEMA_NAME
+group by s.schema_name, ADAPTER_SCRIPT_SCHEMA, ADAPTER_SCRIPT_NAME;]])
+		else
+		
+        	avs1_success, avs1_res = pquery([[/*snapshot execution*/select
+'CREATE VIRTUAL SCHEMA "' || s.SCHEMA_NAME || '" USING ' || ADAPTER_SCRIPT || '
+WITH
+' || GROUP_CONCAT(PROPERTY_NAME || ' = ''' || PROPERTY_VALUE || '''' ORDER BY PROPERTY_NAME SEPARATOR '
+') || ';
+' AS TEXT
+from
+EXA_DBA_VIRTUAL_SCHEMAS s
+join
+EXA_DBA_VIRTUAL_SCHEMA_PROPERTIES p on s.SCHEMA_NAME=p.SCHEMA_NAME
 group by s.schema_name, adapter_script;]])
+
+end
         output(#avs1_res)
         if not avs1_success then
                 error('Error Creating virtual Schemas')
@@ -898,7 +892,7 @@ end
         privsuc, privcheck = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_USERS LIMIT 1]])
 
         if not (privsuc) then
-                error('The User does not have SELECT ANY DICTIONARY privileges')
+                error('The User does not have SELECT ANY DICTIONARY privilege')
         end
 
 check_version()
@@ -1007,10 +1001,10 @@ end
 
                                                                                 -- schemas
 if version_short == '5.0' then
-        m1_success, m1_res = pquery([[select OBJECT_NAME, OBJECT_COMMENT from EXA_DBA_OBJECTS WHERE OBJECT_TYPE = 'SCHEMA' ORDER BY 'OBJECT_NAME']])
+        m1_success, m1_res = pquery([[select OBJECT_NAME, OBJECT_COMMENT from EXA_DBA_OBJECTS WHERE OBJECT_TYPE = 'SCHEMA' ORDER BY OBJECT_NAME]])
 else
 
-        m1_success, m1_res = pquery([[/*snapshot execution*/select OBJECT_NAME, OBJECT_COMMENT from EXA_DBA_OBJECTS WHERE OBJECT_TYPE = 'SCHEMA' AND OBJECT_IS_VIRTUAL IS FALSE ORDER BY 'OBJECT_NAME']])
+        m1_success, m1_res = pquery([[/*snapshot execution*/select OBJECT_NAME, OBJECT_COMMENT from EXA_DBA_OBJECTS WHERE OBJECT_TYPE = 'SCHEMA' AND OBJECT_IS_VIRTUAL IS FALSE ORDER BY OBJECT_NAME]])
 end
 if not m1_success then
         error('Error at m1')
@@ -1030,38 +1024,12 @@ else
                         end -- if
                 end     -- else (tables)
                                                                         -- add all functions to the schema
-                m21_success, m21_res=pquery([[/*snapshot execution*/SELECT FUNCTION_NAME, 'CREATE ' ||
-        FUNCTION_TEXT || case
-                when
-                        substr(
-                                rtrim(
-                                        REGEXP_REPLACE(
-                                                function_text,
-                                                '[' || CHR(10) || CHR(13) || ']',
-                                                ' '
-                                        ),
-                                        ' '
-                                ),
-                                length(
-                                        rtrim(
-                                                REGEXP_REPLACE(
-                                                        function_text,
-                                                        '[' || CHR(10) || CHR(13) || ']',
-                                                        ' '
-                                                ),
-                                                ' '
-                                        )
-                                ),
-                                1
-                        ) <> '/'
-                then
-                        '
-/'
-                else
-                        ''
-        end function_text
-FROM
-        EXA_DBA_FUNCTIONS WHERE FUNCTION_SCHEMA=:s]],{s = m1_res[i].OBJECT_NAME})
+                m21_success, m21_res=pquery([[/*snapshot execution*/SELECT
+		FUNCTION_NAME
+		, 'CREATE ' || rtrim(FUNCTION_TEXT, '/' || CHR(13) || CHR(10)) || CHR(13) || CHR(10) || '/' AS function_text				 
+	FROM
+		EXA_DBA_FUNCTIONS
+		WHERE FUNCTION_SCHEMA=:s]],{s = m1_res[i].OBJECT_NAME})
                 if not m21_success then
                         error('Error at m21')
                 else
@@ -1095,11 +1063,11 @@ FROM
       write_table('VIRTUAL SCHEMAS', ddl)
     end
 
-    if constraints_separately==true then
-      -- add all constraints
-      add_all_constraints_to_DDL()
+      -- add constraints - all or only cross-schema, based on constraints_separately variable
+							
+      add_all_constraints_to_DDL(constraints_separately)
       write_table('CONSTRAINTS',ddl)
-    end
+	   
 
         if add_user_structure then
           change_schema_owners()
@@ -1151,7 +1119,7 @@ local suc1, res1 = pquery([[select schema_name, object_name from exa_syscat
 
 if suc1 then
         for i=1, #res1 do
-                summary[#summary+1] = {[[export ]]..res1[i][1]..[[.]]..res1[i][2]..[[ into local csv file ']]..file_location..[[]]..res1[i][2]..[[.csv' truncate;]]}
+                summary[#summary+1] = {[[export ]]..res1[i].SCHEMA_NAME..[[.]]..res1[i].OBJECT_NAME..[[ into local csv file ']]..file_location..[[]]..res1[i][2]..[[.csv.gz' truncate;]]}
         end
 else
         local error_msg = "ERR: ["..res1.error_code.."] "..res1.error_message
@@ -1179,7 +1147,7 @@ local suc1, res1 = pquery([[select schema_name, object_name from exa_syscat
 if suc1 then
         for i=1, #res1 do
                 summary[#summary+1] = {[[create or replace table SYS_OLD.]]..res1[i][2]..[[ like ]]..res1[i][1]..[[.]]..res1[i][2]..[[;]]}
-                summary[#summary+1] = {[[import into SYS_OLD.]]..res1[i][2]..[[ from local csv file ']]..'&'..[[1/]]..res1[i][2]..[[.csv';]]}
+                summary[#summary+1] = {[[import into SYS_OLD.]]..res1[i][2]..[[ from local csv file ']]..'&'..[[1/]]..res1[i][2]..[[.csv.gz';]]}
         end
 else
         local error_msg = "ERR: ["..res1.error_code.."] "..res1.error_message
@@ -1189,4 +1157,3 @@ end
 return summary, "DDL varchar(2000000)"
 
 /
-
