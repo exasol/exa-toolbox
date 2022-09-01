@@ -42,12 +42,13 @@ check 'Public readable'.
 
 #### Upload .whl files to bucket
 Once the bucket is created, you need to download two .whl files:
-- `simple_salesforce-1.0.0-py2.py3-none-any.whl` from [here](https://pypi.org/project/simple-salesforce/#files)
-- `Authlib-0.14.1-py2.py3-none-any.whl` from [here](https://pypi.org/project/Authlib/#files)
+- `simple_salesforce-1.0.0-py2.py3-none-any.whl` from [here](https://pypi.org/project/simple-salesforce/1.0.0/#files)
+- `Authlib-0.14.1-py2.py3-none-any.whl` from [here](https://pypi.org/project/Authlib/0.14.1/#files)
 
 Upload these two to you newly created bucket, either via curl or by using the
 BucketFS-Explorer that can be
 downloaded [here](https://github.com/exasol/bucketfs-explorer) under 'Getting started' -->  'bucketfsexplorer-0.0.1-SNAPSHOT-jar-with-dependencies.jar'.
+If you opt for using newer versions of `simple_salesforce` and `Authlib` libraries you might need to upload additional .whl files for package dependencies.
 
 #### Check if you successfully uploaded the files
 After uploading the files to BucketFS, they are synced to all database nodes. So now you
