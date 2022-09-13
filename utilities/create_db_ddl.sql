@@ -78,7 +78,7 @@ CHANGE LOG:
 2022-01-07
         - Added snapshot execution (for 6.2 and 7.0 users)
 2022-08-30
-        - Improved delimitation of identifiers
+		- Improved delimitation of identifiers
 		- Added support for OpenID users
 		- Simplified some queries and replaced some loops with Lua's 1
 		- Accounted the split of EXA_DBA_VIRTUAL_SCHEMA.ADAPTER_SCRIPT column in 8.0
@@ -587,9 +587,9 @@ function add_schemas_constraint_to_DDL(schema_name)     --ADD THE SCHEMA'S CONST
         select COL.constraint_schema, COL.constraint_table, COL.constraint_type, COL.constraint_name, COL.column_name, AC.constraint_enabled, COL.REFERENCED_SCHEMA, COL.REFERENCED_TABLE, COL.REFERENCED_COLUMN
         from EXA_DBA_constraints AC
         join EXA_DBA_constraint_columns COL
-        on AC.constraint_name=COL.constraint_name and AC.CONSTRAINT_SCHEMA = COL.CONSTRAINT_SCHEMA and AC.CONSTRAINT_TABLE = COL.CONSTRAINT_TABLE) )
+        on AC.constraint_name=COL.constraint_name and AC.CONSTRAINT_SCHEMA = COL.CONSTRAINT_SCHEMA and AC.CONSTRAINT_TABLE = COL.CONSTRAINT_TABLE)
 select constraint_schema, constraint_table, constraint_type, constraint_name, constraint_enabled, REFERENCED_TABLE, group_concat(column_name separator '","') column_names, group_concat(REFERENCED_COLUMN separator '","') REFERENCED_COLUMNS
-from sel1  where constraint_schema=:s AND (CONSTRAINT_TYPE='PRIMARY KEY' OR CONSTRAINT_TYPE='FOREIGN KEY')
+from sel1  where constraint_schema=:s AND (REFERENCED_SCHEMA=:s or REFERENCED_SCHEMA is null) AND (CONSTRAINT_TYPE='PRIMARY KEY' OR CONSTRAINT_TYPE='FOREIGN KEY')
 group by  constraint_schema, constraint_table, constraint_type, constraint_name, constraint_enabled, REFERENCED_TABLE, REFERENCED_SCHEMA
 order by constraint_type desc, constraint_table]], {s=schema_name})
         if not ac1_success then
@@ -619,7 +619,7 @@ function add_all_constraints_to_DDL(only_cross_schema)   --ADD ALL CONSTRAINTS--
         on AC.constraint_name=COL.constraint_name and AC.CONSTRAINT_SCHEMA = COL.CONSTRAINT_SCHEMA and AC.CONSTRAINT_TABLE = COL.CONSTRAINT_TABLE)
 select constraint_schema, constraint_table, constraint_type, constraint_name, constraint_enabled, REFERENCED_TABLE, REFERENCED_SCHEMA, group_concat(column_name separator '","') column_names, group_concat(REFERENCED_COLUMN separator '","') REFERENCED_COLUMNS
 from sel1  where (CONSTRAINT_TYPE='PRIMARY KEY' OR CONSTRAINT_TYPE='FOREIGN KEY')
-and (constraint_schema <> REFERENCED_SCHEMA or :only_cs)
+and ((constraint_schema <> REFERENCED_SCHEMA and :only_cs) or not :only_cs)
 group by  constraint_schema, constraint_table, constraint_type, constraint_name, constraint_enabled, REFERENCED_TABLE, REFERENCED_SCHEMA
 order by constraint_type desc,constraint_schema, constraint_table]], {only_cs=only_cross_schema})
 
@@ -1065,7 +1065,7 @@ else
 
       -- add constraints - all or only cross-schema, based on constraints_separately variable
 							
-      add_all_constraints_to_DDL(constraints_separately)
+      add_all_constraints_to_DDL(not constraints_separately)
       write_table('CONSTRAINTS',ddl)
 	   
 
