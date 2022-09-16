@@ -193,7 +193,7 @@ For more information on the usage of the script, please view the below community
 
 
 ## create_or_replace_view_preserve_grants
-([reate_or_replace_view_preserve_grants.sql](create_or_replace_view_preserve_grants.sql))
+([create_or_replace_view_preserve_grants.sql](create_or_replace_view_preserve_grants.sql))
 The Lua script allows to create or replace views preserving the existing grants.
 Usage:
 ```sql

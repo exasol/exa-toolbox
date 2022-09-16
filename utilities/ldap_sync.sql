@@ -31,14 +31,14 @@ Changes in this version:
 
 --This script will search for the specified attribute on the given distinguished name
 --/
-CREATE OR REPLACE PYTHON SCALAR SCRIPT EXA_TOOLBOX."GET_AD_ATTRIBUTE" ("LDAP_CONNECTION" VARCHAR(20000),"SEARCH_STRING" VARCHAR(20000) UTF8, "ATTR"  VARCHAR(10000)) EMITS ("SEARCH_STRING" VARCHAR(20000) UTF8, "ATTR" VARCHAR(10000), "VAL" VARCHAR(10000) UTF8) AS
+CREATE OR REPLACE PYTHON3 SCALAR SCRIPT EXA_TOOLBOX."GET_AD_ATTRIBUTE" ("LDAP_CONNECTION" VARCHAR(20000) UTF8, "SEARCH_STRING" VARCHAR(20000) UTF8, "ATTR" VARCHAR(10000) UTF8) EMITS ("SEARCH_STRING" VARCHAR(20000) UTF8, "ATTR" VARCHAR(10000) UTF8, "VAL" VARCHAR(10000) UTF8) AS
 import ldap
 
 def run(ctx):
-        # The below information corresponds to the user needed to connect to ldap who can traverse the ldap structure and pull out user attributes. 
-        # This information should be stored in a CONNECTION object and you must GRANT ACCESS ON <CONNECTION> FOR <SCRIPT> TO <USER>
-        # More details: https://docs.exasol.com/database_concepts/udf_scripts/hide_access_keys_passwords.htm
-        uri =   exa.get_connection(ctx.LDAP_CONNECTION).address #ldap/AD server
+	# The below information corresponds to the user needed to connect to ldap who can traverse the ldap structure and pull out user attributes.
+	# This information should be stored in a CONNECTION object and you must GRANT ACCESS ON <CONNECTION> FOR <SCRIPT> TO <USER>
+	# More details: https://docs.exasol.com/database_concepts/udf_scripts/hide_access_keys_passwords.htm
+	uri =   exa.get_connection(ctx.LDAP_CONNECTION).address #ldap/AD server
 	user = exa.get_connection(ctx.LDAP_CONNECTION).user   #technical user for LDAP
 	password = exa.get_connection(ctx.LDAP_CONNECTION).password  #pwd of technical user
 	encoding = "utf8"  #may depend on ldap server, try latin1 or cp1252 if you get problems with special characters
@@ -56,25 +56,25 @@ def run(ctx):
 		#Authenticates with user
 		ldapClient.bind_s(user, password)
 	
-		results = ldapClient.search_s(ctx.SEARCH_STRING.encode(encoding), ldap.SCOPE_BASE)
+		results = ldapClient.search_s(ctx.SEARCH_STRING, ldap.SCOPE_BASE)
 	
 		# Emits the results of the specified attributes
 		for result in results:
 			result_dn = result[0]
 			result_attrs = result[1]
 
-	  		if ctx.ATTR in result_attrs:
+			if ctx.ATTR in result_attrs:
 				for v in result_attrs[ctx.ATTR]:
-			             ctx.emit(ctx.SEARCH_STRING, ctx.ATTR, str(v).decode(encoding))#add .decode if there are special characters
+					ctx.emit(ctx.SEARCH_STRING, ctx.ATTR, v.decode(encoding))
 
-	except ldap.LDAPError, e:
+	except ldap.LDAPError as e:
 		if e.message['desc'] == 'No such object':
-		      ctx.emit(ctx.SEARCH_STRING, ctx.ATTR, 'No such object')
+			ctx.emit(ctx.SEARCH_STRING, ctx.ATTR, 'No such object')
 		else:
-		      raise ldap.LDAPError(e.message['desc'])
+			raise ldap.LDAPError(e.message['desc'])
 		
 	finally:
-		ldapClient.unbind_s()		
+		ldapClient.unbind_s()
 
 /
 
@@ -84,16 +84,16 @@ def run(ctx):
 -- To find out which attributes contain the username, you can run this: select EXA_TOOLBOX.LDAP_HELPER('LDAP_SERVER', user_name) from exa_dba_connections WHERE connection_name = 'LDAP_SERVER'; 
 -- For other purposes, you can run the script using the LDAP connection you created and the distinguished name of the object you want to investigate: SELECT EXA_TOOLBOX.LDAP_HELPER(<LDAP connection>,<distinguished name>);
 --/
-CREATE OR REPLACE PYTHON SCALAR SCRIPT EXA_TOOLBOX."LDAP_HELPER" ("LDAP_CONNECTION" VARCHAR(20000),"SEARCH_STRING" VARCHAR(20000) UTF8) EMITS ("SEARCH_STRING" VARCHAR(20000) UTF8, "ATTR" VARCHAR(10000), "VAL" VARCHAR(10000) UTF8) AS
+CREATE OR REPLACE PYTHON3 SCALAR SCRIPT EXA_TOOLBOX."LDAP_HELPER" ("LDAP_CONNECTION" VARCHAR(20000) UTF8, "SEARCH_STRING" VARCHAR(20000) UTF8) EMITS ("SEARCH_STRING" VARCHAR(20000) UTF8, "ATTR" VARCHAR(10000) UTF8, "VAL" VARCHAR(10000) UTF8) AS
 
 
 import ldap
 
 def run(ctx):
-        # The below information corresponds to the user needed to connect to ldap who can traverse the ldap structure and pull out user attributes. 
-        # This information should be stored in a CONNECTION object and you must GRANT ACCESS ON <CONNECTION> FOR <SCRIPT> TO <USER>
-        # More details: https://docs.exasol.com/database_concepts/udf_scripts/hide_access_keys_passwords.htm
-        uri =   exa.get_connection(ctx.LDAP_CONNECTION).address #ldap/AD server
+	# The below information corresponds to the user needed to connect to ldap who can traverse the ldap structure and pull out user attributes.
+	# This information should be stored in a CONNECTION object and you must GRANT ACCESS ON <CONNECTION> FOR <SCRIPT> TO <USER>
+	# More details: https://docs.exasol.com/database_concepts/udf_scripts/hide_access_keys_passwords.htm
+	uri =   exa.get_connection(ctx.LDAP_CONNECTION).address #ldap/AD server
 	user = exa.get_connection(ctx.LDAP_CONNECTION).user   #technical user for LDAP
 	password = exa.get_connection(ctx.LDAP_CONNECTION).password  #pwd of technical user
 	encoding = "utf8"  #may depend on ldap server, try latin1 or cp1252 if you get problems with special characters
@@ -111,21 +111,22 @@ def run(ctx):
 		#Authenticates with user
 		ldapClient.bind_s(user, password)
 	
-		results = ldapClient.search_s(ctx.SEARCH_STRING.encode(encoding), ldap.SCOPE_BASE)
+		results = ldapClient.search_s(ctx.SEARCH_STRING, ldap.SCOPE_BASE)
 	
 		# Emits the results of the specified attributes
 		for result in results:
 			result_dn = result[0]
 			result_attrs = result[1]
 
-	  		for attrs in result_attrs:
-			     ctx.emit(result_dn, attrs, str(result_attrs[attrs]).decode(encoding)) #add .decode if there are special characters
+			for attrs in result_attrs:
+				item_str = str(list(x.decode(encoding) for x in result_attrs[attrs]))
+				ctx.emit(result_dn, attrs, item_str)
 
-	except ldap.LDAPError, e:
+	except ldap.LDAPError as e:
 		if e.message['desc'] == 'No such object':
-		      ctx.emit(ctx.SEARCH_STRING, 'error', 'No such object')
+			ctx.emit(ctx.SEARCH_STRING, 'error', 'No such object')
 		else:
-		      raise ldap.LDAPError(e.message['desc'])
+			raise ldap.LDAPError(e.message['desc'])
 		
 	finally:
 		ldapClient.unbind_s()		
