@@ -67,13 +67,9 @@ def run(ctx):
 				for v in result_attrs[ctx.ATTR]:
 					ctx.emit(ctx.SEARCH_STRING, ctx.ATTR, v.decode(encoding))
 
-	except ldap.LDAPError as e:
-		if e.message['desc'] == 'No such object':
-			ctx.emit(ctx.SEARCH_STRING, ctx.ATTR, 'No such object')
-		else:
-			raise ldap.LDAPError(e.message['desc'])
-		
-	finally:
+	except ldap.NO_SUCH_OBJECT:
+		ctx.emit(ctx.SEARCH_STRING, ctx.ATTR, 'No such object')
+	else:
 		ldapClient.unbind_s()
 
 /
