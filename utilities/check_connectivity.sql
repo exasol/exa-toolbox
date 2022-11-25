@@ -2,7 +2,7 @@
 
     This script is to check network connectivity from an Exasol database to a host.
     Returns either "OK" in case of success or an exception.
-    See more at https://www.exasol.com/support/browse/SOL-307
+    See more at https://exasol.my.site.com/s/article/Check-connectibility-of-EXASolution-to-external-network-services?language=en_US
 
 */
 
