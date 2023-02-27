@@ -1,3 +1,10 @@
+/*
+		This script creates DDL statements for an entire database. 
+		The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
+        
+        Originally mentioned in article https://exasol.my.site.com/s/article/Create-DDL-for-the-entire-Database?language=en_US
+*/
+
 CREATE SCHEMA IF NOT EXISTS exa_toolbox;
 OPEN SCHEMA exa_toolbox;
 

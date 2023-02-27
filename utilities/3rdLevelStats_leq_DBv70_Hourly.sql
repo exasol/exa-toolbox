@@ -2,7 +2,7 @@
         The script to export hourly statistics for the last x days (x is a script parameter) for investigation by support.
         This is part 3 of 3-part script set for Exasol Database versions up to 7.0.
         
-        Originally mentioned in article https://community.exasol.com/t5/database-features/statistics-export-for-support-v6-x/ta-p/1778
+        Originally mentioned in article https://exasol.my.site.com/s/article/Statistics-export-for-support?language=en_US
 */
 
 set autocommit off;

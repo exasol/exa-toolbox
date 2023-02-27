@@ -2,7 +2,7 @@
         The script to export database usage statistics for investigation by support.
         This script applies for Exasol Database versions starting from 7.1.
         
-        Originally mentioned in article https://community.exasol.com/t5/database-features/statistics-export-for-support-v6-x/ta-p/1778
+        Originally mentioned in article https://exasol.my.site.com/s/article/Statistics-export-for-support?language=en_US
 */
 
 set autocommit off;
