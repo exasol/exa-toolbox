@@ -2,7 +2,7 @@
         The query to obtain information about read and write locks held by open sessions.
         This script applies for Exasol Database versions starting from 7.1.
 
-        Originally mentioned in article https://community.exasol.com/t5/database-features/how-to-determine-idle-sessions-with-open-transactions/ta-p/1238
+        Originally mentioned in article https://exasol.my.site.com/s/article/How-to-determine-idle-sessions-with-open-transactions-Except-Snapshot-Executions?language=en_US
 */
 
 with

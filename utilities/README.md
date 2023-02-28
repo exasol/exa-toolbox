@@ -20,6 +20,9 @@
   * [create_db_ddl](#create_db_ddl)
   * [3rdLevelStatistics](#3rdLevelStatistics)
   * [Union_All_Optimization_-_generate_view](#Union_All_Optimization_-_generate_view)
+  * [open_transactions](#open_transactions)
+  * [confd_xmlrpc](#confd_xmlrpc)
+  * [importing_and_exporting_data_with_google_bigquery](#importing_and_exporting_data_with_google_bigquery)
 
 <!-- tocstop -->
 
@@ -187,9 +190,9 @@ EXECUTE SCRIPT  EXA_TOOLBOX.SESSION_WATCHDOG();
 ([ldap_sync.sql](ldap_sync.sql))
 
 The attached scripts will help you setup a syncronization of LDAP groups and members with database roles and users.
-For more information on the usage of the script, please view the below community article:
+For more information on the usage of the script, please view the below knowledge base article:
 
-[Syncronization of LDAP/ Active Directory Groups and Members to Exasol Database Users and Roles](https://community.exasol.com/t5/database-features/synchronization-of-ldap-active-directory-groups-and-members-to/ta-p/1686)
+[Syncronization of LDAP/ Active Directory Groups and Members to Exasol Database Users and Roles](https://exasol.my.site.com/s/article/Synchronization-of-LDAP-Active-Directory-Groups-and-Members-to-Exasol-Database-Users-and-Roles?language=en_US)
 
 
 ## create_or_replace_view_preserve_grants
@@ -208,27 +211,27 @@ Please ensure that the Parameter has to start with "create or replace view "
 
 This script creates DDL for a specified table.
 The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
-For more information on the usage of the script, please view the below community article:
+For more information on the usage of the script, please view the below knowledge base article:
 
-[Create DDL for a table](https://community.exasol.com/t5/database-features/create-ddl-for-a-table/ta-p/1418)
+[Create DDL for a table](https://exasol.my.site.com/s/article/Create-DDL-for-a-table?language=en_US)
 
 ## create_view_ddl
 ([create_view_ddl.sql](create_view_ddl.sql))
 
 This script creates DDL statements for recursive dependencies of a view. 
 The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
-For more information on the usage of the script, please view the below community article:
+For more information on the usage of the script, please view the below knowledge base article:
 
-[How to create DDL for Exasol support](https://community.exasol.com/t5/database-features/how-to-create-ddl-for-exasol-support/ta-p/1734)
+[How to create DDL for Exasol support](https://exasol.my.site.com/s/article/How-to-create-DDL-for-Exasol-support?language=en_US)
 
 ## create_db_ddl
 ([create_db_ddl.sql](create_db_ddl.sql))
 
 This script creates DDL statements for an entire database. 
 The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
-For more information on the usage of the script, please view the below community article:
+For more information on the usage of the script, please view the below knowledge base article:
 
-[Create DDL for the entire Database](https://community.exasol.com/t5/database-features/create-ddl-for-the-entire-database/ta-p/1417)
+[Create DDL for the entire Database](https://exasol.my.site.com/s/article/Create-DDL-for-the-entire-Database?language=en_US)
 
 ## 3rdLevelStatistics
 DB versions up to 7.0:
@@ -240,16 +243,16 @@ DB versions starting from 7.1:
   * [3rdLevelStatistics_geq_DBv71.sql](3rdLevelStatistics_geq_DBv71.sql)
 
 The scripts to export database usage statistics for investigation by support.
-For more information on the usage of the script, please view the below community article:
+For more information on the usage of the script, please view the below knowledge base article:
 
-[Statistics export for support](https://community.exasol.com/t5/database-features/statistics-export-for-support-v6-x/ta-p/1778)
+[Statistics export for support](https://exasol.my.site.com/s/article/Statistics-export-for-support?language=en_US)
 
 ## Union_All_Optimization_-_generate_view
   * [generator_union_all_view.sql](generator_union_all_view.sql)
 
 **Description:**
 
-It is possible to import data to Exasol in parallel by creating multiple sub tables and combining them within an ```union all``` clause. See also this community post for more information - [Union all Optimization](https://community.exasol.com/t5/database-features/union-all-optimization/ta-p/1607). 
+It is possible to import data to Exasol in parallel by creating multiple sub tables and combining them within an ```union all``` clause. See also this knowledge base article for more information - [Union all Optimization](https://exasol.my.site.com/s/article/UNION-ALL-optimization?language=en_US).
 
 **Script:**
 
@@ -289,9 +292,18 @@ DB versions starting from 7.1:
   * [open_transactions_geq_DBv71.sql](open_transactions_geq_DBv71.sql)
 
 The query to obtain information about read and write locks held by open sessions.
-For more information on the usage of the script, please view the below community article:
+For more information on the usage of the script, please view the below knowledge base article:
 
-[How to determine idle sessions with open transactions](https://community.exasol.com/t5/database-features/how-to-determine-idle-sessions-with-open-transactions/ta-p/1238)
+[How to determine idle sessions with open transactions](https://exasol.my.site.com/s/article/How-to-determine-idle-sessions-with-open-transactions-Except-Snapshot-Executions?language=en_US)
 
 ## confd_xmlrpc
 You can use the [confd_xmlrpc.py](confd_xmlrpc.py) script to interact with ConfD using XMLRPC. ConfD is primarily used beginning with Exasol version 8
+
+## importing_and_exporting_data_with_google_bigquery
+  * [import_from_bigquery.sql](import_from_bigquery.sql)
+  * [export_to_bigquery.sql](export_to_bigquery.sql)
+
+The scripts to accelerate importing and exporting data between Exasol and Bigquery by means of using an intermediate CSV file.
+For more information on the usage of the script, please view the below knowledge base article:
+
+[Importing and Exporting Data with Google Bigquery](https://exasol.my.site.com/s/article/Importing-and-Exporting-Data-with-Google-Bigquery?language=en_US)

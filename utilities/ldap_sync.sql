@@ -3,8 +3,8 @@ The below scripts will help you synchronize database users with LDAP users. The 
 a distinguished name as a role comment and will then pull the members of this group from LDAP, create the necessary users, 
 and grant permissions. When users are removed from the group in LDAP, the users will also have the role revoked from them
 
-For more information, please see the below community article:
-https://community.exasol.com/t5/database-features/synchronization-of-ldap-active-directory-groups-and-members-to/ta-p/1686
+For more information, please see the below knowledge base article:
+https://exasol.my.site.com/s/article/Synchronization-of-LDAP-Active-Directory-Groups-and-Members-to-Exasol-Database-Users-and-Roles?language=en_US
 
 Version 2.2:
  - Extended the length of the VARCHAR column definitions to be able to query larger AD's

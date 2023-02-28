@@ -4,7 +4,7 @@ create schema if not exists exa_toolbox;
         This script creates DDL statements for recursive dependencies of a view. 
         The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
         
-        Originally mentioned in article https://community.exasol.com/t5/database-features/how-to-create-ddl-for-exasol-support/ta-p/1734
+        Originally mentioned in article https://exasol.my.site.com/s/article/How-to-create-DDL-for-Exasol-support?language=en_US
 */
 
 --/

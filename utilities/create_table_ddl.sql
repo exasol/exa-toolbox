@@ -4,7 +4,7 @@ CREATE SCHEMA IF NOT EXISTS exa_toolbox;
         This script creates DDL for a specified table.
         The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
         
-        Originally mentioned in article https://community.exasol.com/t5/database-features/create-ddl-for-a-table/ta-p/1418
+        Originally mentioned in article https://exasol.my.site.com/s/article/Create-DDL-for-a-table?language=en_US
 		
         Params: source schema, source table, target schema, target table, replace_option (adds "OR REPLACE" to DDL when 'true').
 */
