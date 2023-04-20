@@ -1,0 +1,14 @@
+#Global
+EXAPLUS='/usr/opt/EXASuite-6/EXASolution-6.0.8/bin/Console'
+PROFILENAME='metadata_backup_profile'
+
+#backup.sh
+EXTERNAL_DIR='/mount/mppdb'
+SYSPATH='/usr/opt/metabackup'
+DB_NAME='YOUR_EXASOL_DB_NAME'
+EXAPLUS_TIMEOUT='300'
+EXAPLUS_RECONNECT='1'
+
+#restore.sh
+BACKUP_RESTORE_PATH='/usr/opt/metabackup/backups/ddls'
+RESTORE_SYS_SQL_PATH='/usr/opt/metabackup'

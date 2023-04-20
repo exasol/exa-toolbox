@@ -23,6 +23,7 @@
   * [open_transactions](#open_transactions)
   * [confd_xmlrpc](#confd_xmlrpc)
   * [importing_and_exporting_data_with_google_bigquery](#importing_and_exporting_data_with_google_bigquery)
+  * [metadata_backup](#metadata_backup)
 
 <!-- tocstop -->
 
@@ -307,3 +308,16 @@ The scripts to accelerate importing and exporting data between Exasol and Bigque
 For more information on the usage of the script, please view the below knowledge base article:
 
 [Importing and Exporting Data with Google Bigquery](https://exasol.my.site.com/s/article/Importing-and-Exporting-Data-with-Google-Bigquery?language=en_US)
+
+## metadata_backup
+
+* [backup.sh](metadata_backup/backup.sh)
+* [config](metadata_backup/config)
+* [createddl.sql](metadata_backup/createddl.sql)
+* [README.txt](metadata_backup/README.txt)
+* [restore.sh](metadata_backup/restore.sh)
+
+This script will generate a backup of the metadata only (no data) of a database by creating a DDL's commands that then can be used to create all objects back on the same database or another.
+For more information on the usage of the script, please view the below knowledge base article:
+
+[Database Metadata Backup Concept](https://exasol.my.site.com/s/article/Database-Metadata-Backup-Concept)
