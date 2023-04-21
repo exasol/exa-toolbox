@@ -1,5 +1,5 @@
 #Global
-EXAPLUS='/usr/opt/EXASuite-6/EXASolution-6.0.8/bin/Console'
+EXAPLUS='/usr/opt/EXASuite-7/EXASolution-7.1.19/bin/Console'
 PROFILENAME='metadata_backup_profile'
 
 #backup.sh
@@ -11,4 +11,4 @@ EXAPLUS_RECONNECT='1'
 
 #restore.sh
 BACKUP_RESTORE_PATH='/usr/opt/metabackup/backups/ddls'
-RESTORE_SYS_SQL_PATH='/usr/opt/metabackup'
+RESTORE_SYS_SQL_PATH='/usr/opt/metabackup/ddls'

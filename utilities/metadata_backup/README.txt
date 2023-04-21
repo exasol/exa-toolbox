@@ -5,12 +5,12 @@ This script will generate a backup of the metadata only (no data) of a database 
 Setup
 -----
 
-1. Untar latest "metadatabackup_vYYYYMMDD.tar.gz" file into a folder (Suggested location: “/usr/opt/metabackup").
+1. Download the files from github into a folder (Suggested location: “/usr/opt/metabackup"). See exact file list in the article.
 2. Edit the file "config" and set the database name, path to EXAPLUS and a "External Location" if desire to store the backups there.
 3. Create a profile in exaplus (exaplus -u xxx -p xxx -c xxx -wp profilename). The name should also be set on the "config" file. 
 4. Please create the LUA scripts listed in "prereq_db_scripts" on the database or better execute backup.sh. This will create the database objects needed.
 
-Note which schema they were created in (default is BACKUP_SCRIPTS). 
+Note which schema they were created in (default is EXA_TOOLBOX).
    (if changed, please check other all files and make sure the schema name is correct specifically: "backup.sh", "createddl.sql")
 
 Backup

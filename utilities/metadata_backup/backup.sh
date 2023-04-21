@@ -14,7 +14,7 @@ FUNC_NOW() {
 }
 
 #Edit createddl.sql if you changed the name of the schema in prereq_db_scripts.sql
-#Ensure DB LUA scripts BACKUP_SYS and BI_METADATA_BACKUPV2 have been created
+#Ensure DB LUA scripts BACKUP_SYS and CREATE_DB_DDL have been created
 
 #Create directories if they do not exist
 mkdir -p "$SYSPATH" || { echo "$(FUNC_NOW) ERR: Could not create directory $SYSPATH"; exit 1; }
@@ -44,18 +44,20 @@ else
 
         #Creates restore_sys.sql script
         echo "$(FUNC_NOW) INFO: Executing database backup script to create restore_sys.sql"
-        "$EXAPLUS"/exaplus -q -profile "$PROFILENAME" -Q "$EXAPLUS_TIMEOUT" -L -retry "$EXAPLUS_RECONNECT" -sql "execute script backup_scripts.restore_sys;" > "${SYSPATH}/${DDL_DIR}/restore_sys.sql" || { echo "$(FUNC_NOW) ERR: Could not create restore_sys.sql script"; exit 1; }
+        "$EXAPLUS"/exaplus -q -profile "$PROFILENAME" -Q "$EXAPLUS_TIMEOUT" -L -retry "$EXAPLUS_RECONNECT" -sql "execute script exa_toolbox.restore_sys;" > "${SYSPATH}/${DDL_DIR}/restore_sys.sql" || { echo "$(FUNC_NOW) ERR: Could not create restore_sys.sql script"; exit 1; }
         if [ -f "$DDL_DIR/restore_sys.sql" ]; then
             sed -i 's/^ *//; s/ *$//; /^$/d' "$DDL_DIR/restore_sys.sql"
+            sed -i '1d' "$DDL_DIR/restore_sys.sql"
+
         fi
 
         #Creates export_raw.sql 
         echo "$(FUNC_NOW) INFO: Executing database backup script to create export_raw.sql"
-        "$EXAPLUS"/exaplus -q -profile "$PROFILENAME" -Q "$EXAPLUS_TIMEOUT" -L -retry "$EXAPLUS_RECONNECT" -sql "execute script backup_scripts.backup_sys('${SYSPATH}/${DDL_DIR}/');" > "${SYSPATH}/${DDL_DIR}/export_raw.sql" || { echo "$(FUNC_NOW) ERR: Could not create export_waw.sql script"; exit 1; }
+        "$EXAPLUS"/exaplus -q -profile "$PROFILENAME" -Q "$EXAPLUS_TIMEOUT" -L -retry "$EXAPLUS_RECONNECT" -sql "execute script exa_toolbox.backup_sys('${SYSPATH}/${DDL_DIR}/');" > "${SYSPATH}/${DDL_DIR}/export_raw.sql" || { echo "$(FUNC_NOW) ERR: Could not create export_waw.sql script"; exit 1; }
         if [ -f "$DDL_DIR/export_raw.sql" ]; then
             sed -i '1,3d' "$DDL_DIR/export_raw.sql"
             if [ -f $DDL_DIR/export_raw.sql ] && [ -f $DDL_DIR/createddl.sql ]; then
-                echo "$(FUNC_NOW) INFO: Running export.sql and createddl.sql this might take some time"
+                echo "$(FUNC_NOW) INFO: Running export_raw.sql and createddl.sql this might take some time"
                 "$EXAPLUS"/exaplus -q -profile "$PROFILENAME" -Q "$EXAPLUS_TIMEOUT" -L -retry "$EXAPLUS_RECONNECT" -f "$SYSPATH/$DDL_DIR/export_raw.sql" > "$SYSPATH/$LOG_FILE_DIR/export_sql_logs-${NOW}.txt" || { echo "$(FUNC_NOW) ERR: Could not connect to DB ${DB_NAME}"; exit 1; }
                 "$EXAPLUS"/exaplus -q -profile "$PROFILENAME" -Q "$EXAPLUS_TIMEOUT" -L -retry "$EXAPLUS_RECONNECT" -f "$SYSPATH/$DDL_DIR/createddl.sql" > "$SYSPATH/$LOG_FILE_DIR/createddl_log-${NOW}.txt" || { echo "$(FUNC_NOW) ERR: Could not connect to DB ${DB_NAME}"; exit 1; }
                 if [ -f "ddl.sql" ]; then
