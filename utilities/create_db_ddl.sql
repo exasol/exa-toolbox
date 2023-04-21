@@ -9,7 +9,7 @@ CREATE SCHEMA IF NOT EXISTS exa_toolbox;
 OPEN SCHEMA exa_toolbox;
 
 --/
-CREATE OR REPLACE LUA SCRIPT CREATE_DB_DDL (add_user_structure,add_rights,store_in_table) RETURNS TABLE AS
+CREATE OR REPLACE LUA SCRIPT exa_toolbox.CREATE_DB_DDL (add_user_structure,add_rights,store_in_table) RETURNS TABLE AS
 /*
 /*
 PARAMETERS:
@@ -68,8 +68,8 @@ CHANGE LOG:
         - Removed nulls from the output
         - Invalid views WILL be created
 2019-01-30
-        - Added new LUA script BACKUP_SCRIPTS."RESTORE_SYS"
-        - Replace LUA script BACKUP_SCRIPTS."BACKUP_SYS"
+        - Added new LUA script exa_toolbox."RESTORE_SYS"
+        - Replace LUA script exa_toolbox."BACKUP_SYS"
         - Format. Removed blank lines. Adjust Tab and spaces
 2019-03-22
         - Added handling of DDL that was over 2 million characters
@@ -1118,7 +1118,7 @@ return summary, "DDL varchar(2000000)"
 /
 
 --/
-CREATE OR REPLACE LUA SCRIPT BACKUP_SCRIPTS."BACKUP_SYS" (file_location) RETURNS TABLE AS
+CREATE OR REPLACE LUA SCRIPT exa_toolbox."BACKUP_SYS" (file_location) RETURNS TABLE AS
 
 summary={}
 
@@ -1142,7 +1142,7 @@ return summary, "DDL varchar(2000000)"
 /
 
 --/
-CREATE OR REPLACE LUA SCRIPT BACKUP_SCRIPTS."RESTORE_SYS" RETURNS TABLE AS
+CREATE OR REPLACE LUA SCRIPT exa_toolbox."RESTORE_SYS" RETURNS TABLE AS
 
 summary={}
 
