@@ -14,8 +14,8 @@ with
 			COMMAND_NAME,
 			SNAPSHOT_MODE
 		from
-			--EXA_DBA_AUDIT_SQL                   -- delivers more exact results (if available)
-			EXA_SQL_LAST_DAY
+			EXA_DBA_AUDIT_SQL                   -- delivers more exact results (if available)
+			--EXA_SQL_LAST_DAY
 		where
 			SESSION_ID in (select SESSION_ID from EXA_DBA_SESSIONS)
 			and success
