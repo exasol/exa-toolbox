@@ -1,6 +1,8 @@
 
 /*
 	This script is monitoring the `EXA_ALL_SESSIONS` system table to identify "bad" sessions based on some criteria, and subsequently, kill/abort these sessions.
+
+	Originally mentioned in article https://exasol.my.site.com/s/article/Enforcing-session-limits-using-a-watchdog-script
 */
 
 CREATE SCHEMA IF NOT EXISTS EXA_TOOLBOX;
