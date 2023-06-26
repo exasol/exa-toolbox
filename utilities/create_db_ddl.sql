@@ -93,6 +93,10 @@ CHANGE LOG:
 		- Changed backup format from .csv to .csv.gz
 2022-11-27
 		- Added group_concat for obj-grants (reduces file size and exec time on restore)
+2023-06-26
+		- Grants on invalid views are now included by default.
+		Executing GRANT on an invalid view requires system privilege "GRANT ANY OBJECT PRIVILEGE".
+		If users want to exclude grants on invalid views they need to adapt the part of script responsible for object privileges.
 */
 
 -- sqlstring concatination
@@ -322,11 +326,12 @@ function add_all_rights()                                       -- ADD ALL RIGHT
         end
 
         -- object privileges
+        -- Both UNION ALL branches are preserved to keep a simple possibility to define special behavior for grants on invalid views
         art2_success, art2_res = pquery([[/*snapshot execution*/SELECT 'GRANT '||GROUP_CONCAT(PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
                                         ' TO "'||GRANTEE||'"' grant_text
                                       FROM (select * from EXA_DBA_OBJ_PRIVS where object_type = 'VIEW') op
-                                      join (select distinct COLUMN_SCHEMA, COLUMN_TABLE from exa_dba_columns where status is null) cols
-                                         on cols.COLUMN_TABLE = op.OBJECT_NAME and cols.COLUMN_SCHEMA = op.OBJECT_SCHEMA
+                                      /*join (select distinct COLUMN_SCHEMA, COLUMN_TABLE from exa_dba_columns where status is null) cols
+                                         on cols.COLUMN_TABLE = op.OBJECT_NAME and cols.COLUMN_SCHEMA = op.OBJECT_SCHEMA*/
 				      group by OBJECT_SCHEMA,OBJECT_NAME,GRANTEE
                                       union all
                                       SELECT 'GRANT '||GROUP_CONCAT(PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
