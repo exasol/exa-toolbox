@@ -8,7 +8,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Add the IP Address of the database access node (beginning with version 8) or a data node
 database_host = '108.129.27.78'
 
-# Add the port which is running ConfD. By default it is 443 in version 7.1 and 20003 in version 8.
+# Add the port which is running ConfD. By default it is 443 in version 7.1 and 20003 in version 8. Make sure that this port is open. 
 port = 20003
 
 # Enter the administrative username you are connecting with (not a database username)
