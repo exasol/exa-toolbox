@@ -24,6 +24,7 @@
   * [confd_xmlrpc](#confd_xmlrpc)
   * [importing_and_exporting_data_with_google_bigquery](#importing_and_exporting_data_with_google_bigquery)
   * [metadata_backup](#metadata_backup)
+  * [ParallelConnectionsExample](#ParallelConnectionsExample)
 
 <!-- tocstop -->
 
@@ -321,3 +322,12 @@ This script will generate a backup of the metadata only (no data) of a database 
 For more information on the usage of the script, please view the below knowledge base article:
 
 [Database Metadata Backup Concept](https://exasol.my.site.com/s/article/Database-Metadata-Backup-Concept)
+
+## ParallelConnectionsExample
+
+* [ParallelConnectionsExample.java](ParallelConnectionsExample.java)
+
+An example Java program that showcases the subconnection concept to read and write data from and into the Exasol server.
+For more information on the usage of the program, please view the below knowledge base article:
+
+[Parallel connections with JDBC](https://exasol.my.site.com/s/article/Parallel-connections-with-JDBC)
