@@ -58,5 +58,6 @@ The EXA-toolbox is a collection of useful scripts and views that you can add to 
   * [confd_xmlrpc](utilities/README.md#confd_xmlrpc)
   * [importing_and_exporting_data_with_google_bigquery](utilities/README.md#importing_and_exporting_data_with_google_bigquery)
   * [metadata_backup](utilities/README.md#metadata_backup)
+  * [ParallelConnectionsExample](utilities/README.md#ParallelConnectionsExample)
 - [Preprocessing](preprocessing)
 
