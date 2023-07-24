@@ -107,31 +107,31 @@ public class ParallelConnectionsExample {
         /** In this example we ask the server to accept up to 20 connections. For each node there will be 
          * a host and a port in the main connection object. If you have 5 machines in your cluster
          * and ask for 20 connections, only 5 will be available. */
-        int nSlaves=connection.EnterParallel(20);
-        if (printOutput) System.out.println(" Main Node - nSlaves=" + nSlaves);
+        int nWorkers=connection.EnterParallel(20);
+        if (printOutput) System.out.println(" Main Node - nWorkers=" + nWorkers);
         if (printOutput) System.out.println(new Time(Calendar.getInstance().getTimeInMillis()));
         
-        ParallelConnectionThread [] slaveThreads;
+        ParallelConnectionThread [] workerThreads;
         
         /** A prepared statement (insert) runs parallel on all connections. */
         if (printOutput) System.out.println(" - INSERT ROWS PARALLEL - ");
-        slaveThreads=new ParallelInsertThread[nSlaves];
-        StartThreads(slaveThreads, nSlaves, connection, 0);
+        workerThreads=new ParallelInsertThread[nWorkers];
+        StartThreads(workerThreads, nWorkers, connection, 0);
         connection.commit();
         if (printOutput) System.out.println(new Time(Calendar.getInstance().getTimeInMillis()));
         
         /** Select runs on all parallel connections, partial results are retrieved for each connection. */
         if (printOutput) System.out.println(" - READ ROWS PARALLEL - ");
-        slaveThreads=new ParallelSelectThread[nSlaves];
-        StartThreads(slaveThreads, nSlaves, connection, 0);
+        workerThreads=new ParallelSelectThread[nWorkers];
+        StartThreads(workerThreads, nWorkers, connection, 0);
         if (printOutput) System.out.println(new Time(Calendar.getInstance().getTimeInMillis()));
         
         /** Creates a result set, then reads it on the parallel nodes using the result set handle. */
         if (printOutput) System.out.println(" - READ ROWS PARALLEL USING A HANDLE - ");
         EXAResultSet res=(EXAResultSet)stmt.executeQuery("select * from test.tep");
-        slaveThreads=new ParallelSelectHandleThread[nSlaves];
+        workerThreads=new ParallelSelectHandleThread[nWorkers];
         /** read the handle for all result parts */
-        StartThreads(slaveThreads, nSlaves, connection, res.GetHandle());
+        StartThreads(workerThreads, nWorkers, connection, res.GetHandle());
         if (printOutput) System.out.println(new Time(Calendar.getInstance().getTimeInMillis()));
 
         /** Free resources in the server. */
@@ -142,34 +142,34 @@ public class ParallelConnectionsExample {
         return 0;
     }
 
-    /** Utilit function used in this testcase to start the threads and wai for them to end
+    /** Utility function used in this testcase to start the threads and wait for them to end
      * 
-     * @param slaveThreads the treads that will start the slave connections
-     * @param nSlaves number of threads/connections
+     * @param workerThreads the treads that will start the worker connections
+     * @param nWorkers number of threads/connections
      * @param connection main connection
      * @param handle statement handle used in just one of the tests to read the rows
      */
-    private void StartThreads(ParallelConnectionThread [] slaveThreads, int nSlaves, EXAConnection connection, int handle)
+    private void StartThreads(ParallelConnectionThread [] workerThreads, int nWorkers, EXAConnection connection, int handle)
     {
-        for (int i=0; i<nSlaves; i++)
+        for (int i=0; i<nWorkers; i++)
         {
-            String [] hosts=connection.GetSlaveHosts();
-            int [] ports=connection.GetSlavePorts();
-            if (printOutput) System.out.println(" Main Node - Token: " + connection.GetSlaveToken() + " Host: " + hosts[i] + " Port: " + ports[i]);
+            String [] hosts=connection.GetWorkerHosts();
+            int [] ports=connection.GetWorkerPorts();
+            if (printOutput) System.out.println(" Main Node - Token: " + connection.GetWorkerToken() + " Host: " + hosts[i] + " Port: " + ports[i]);
             if (printOutput) System.out.println(" Main Node - Starting thread [" + i + "]");
             
-            if (slaveThreads instanceof ParallelSelectThread [])
-                slaveThreads[i]=new ParallelSelectThread(i, connection.GetSlaveToken(), hosts[i], ports[i]);
-            else if (slaveThreads instanceof ParallelInsertThread [])
-                slaveThreads[i]=new ParallelInsertThread(i, connection.GetSlaveToken(), hosts[i], ports[i]);
-            else if (slaveThreads instanceof ParallelSelectHandleThread [])
-                slaveThreads[i]=new ParallelSelectHandleThread(i, connection.GetSlaveToken(), hosts[i], ports[i], handle);
+            if (workerThreads instanceof ParallelSelectThread [])
+                workerThreads[i]=new ParallelSelectThread(i, connection.GetWorkerToken(), hosts[i], ports[i]);
+            else if (workerThreads instanceof ParallelInsertThread [])
+                workerThreads[i]=new ParallelInsertThread(i, connection.GetWorkerToken(), hosts[i], ports[i]);
+            else if (workerThreads instanceof ParallelSelectHandleThread [])
+                workerThreads[i]=new ParallelSelectHandleThread(i, connection.GetWorkerToken(), hosts[i], ports[i], handle);
             
-            slaveThreads[i].start();
+            workerThreads[i].start();
         }
-        for (int i=0; i<nSlaves; i++)
+        for (int i=0; i<nWorkers; i++)
             try {
-                slaveThreads[i].join();
+                workerThreads[i].join();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -180,27 +180,27 @@ public class ParallelConnectionsExample {
      */
     class ParallelConnectionThread extends Thread {
         long token=0;
-        String slaveHost=null;
-        int slavePort=0;
-        int slaveId=0;
+        String workerHost=null;
+        int workerPort=0;
+        int workerId=0;
     }
     
-    /** Inserts rows on every slave connection. Every node prepares the same insert statement.
+    /** Inserts rows on every worker connection. Every node prepares the same insert statement.
      */
     class ParallelInsertThread extends ParallelConnectionThread {
         
     ParallelInsertThread(int sid, long t, String sh, int sp) {
-            slaveId=sid;
+            workerId=sid;
             token=t;
-            slaveHost=sh;
-            slavePort=sp;
+            workerHost=sh;
+            workerPort=sp;
         }
 
         public void run() {
             try {
-                if (printOutput) System.out.println("ParallelInsertThread[" + slaveId + "] - Token: " + token + " Host: " + slaveHost + " Port: " + slavePort);
-                String connStr="jdbc:exa-slave:" + slaveHost + ":" + slavePort + ";slavetoken=" + token + 
-                        ";autocommit=0;encryption=1" + logging + ";slaveID=" + slaveId;
+                if (printOutput) System.out.println("ParallelInsertThread[" + workerId + "] - Token: " + token + " Host: " + workerHost + " Port: " + workerPort);
+                String connStr="jdbc:exa-worker:" + workerHost + ":" + workerPort + ";workertoken=" + token + 
+                        ";autocommit=0;encryption=1" + logging + ";workerID=" + workerId;
                 EXAConnection connection;
                 try {
                     connection = (EXAConnection)DriverManager.getConnection(connStr, "sys", "exasol");
@@ -210,7 +210,7 @@ public class ParallelConnectionsExample {
                 }
   
                 PreparedStatement stmt=connection.prepareStatement("insert into test.tep values (?, ?)");
-                if (slaveId==0) Thread.sleep(1000);
+                if (workerId==0) Thread.sleep(1000);
                 
                 /** Prepared statement parameters must be sent in packages if there is much data to be send.
                 * Recommended data size in one package is around 2MB. */
@@ -221,7 +221,7 @@ public class ParallelConnectionsExample {
                     for (int i=0; i<numRowsPerPackage; i++)
                     {          
                         if (rowCounter % 7 == 0) stmt.setNull(1, java.sql.Types.INTEGER);
-                        else stmt.setInt(1, (int)((i + j*numRowsPerPackage + numRowsPerNode*slaveId) % Integer.MAX_VALUE));
+                        else stmt.setInt(1, (int)((i + j*numRowsPerPackage + numRowsPerNode*workerId) % Integer.MAX_VALUE));
                         
                         /** If the value will be set using setString always use setNull(VARCHAR) here. */
                         if (rowCounter % 9 == 0) stmt.setNull(2, java.sql.Types.VARCHAR);  
@@ -243,14 +243,14 @@ public class ParallelConnectionsExample {
                     //((EXAPreparedStatement)stmt).setMaxVarcharLen(2, col2precision);
                     
                     stmt.executeBatch();
-                    if (printOutput) System.out.println("ParallelInsertThread[" + slaveId + "] - package[" + j + "] done");
+                    if (printOutput) System.out.println("ParallelInsertThread[" + workerId + "] - package[" + j + "] done");
                 }
                 stmt.close();
                 connection.close();
-                if (printOutput) System.out.println("ParallelInsertThread[" + slaveId + "] - did send " + rowCounter + " rows");
-                if (printOutput) System.out.println("ParallelInsertThread[" + slaveId + "] - closed");
+                if (printOutput) System.out.println("ParallelInsertThread[" + workerId + "] - did send " + rowCounter + " rows");
+                if (printOutput) System.out.println("ParallelInsertThread[" + workerId + "] - closed");
             } catch (Exception ex) {
-                if (printOutput) System.out.println("ParallelInsertThread[" + slaveId + "] - Unexpected exception: " + ex.toString());
+                if (printOutput) System.out.println("ParallelInsertThread[" + workerId + "] - Unexpected exception: " + ex.toString());
                 ex.printStackTrace();
             }
         }
@@ -262,22 +262,22 @@ public class ParallelConnectionsExample {
     class ParallelSelectThread extends ParallelConnectionThread {
         
         ParallelSelectThread(int sid, long t, String sh, int sp) {
-            slaveId=sid;
+            workerId=sid;
             token=t;
-            slaveHost=sh;
-            slavePort=sp;
+            workerHost=sh;
+            workerPort=sp;
         }
 
         public void run() {
             try {
-                if (printOutput) System.out.println("ParallelSelectThread[" + slaveId + "] - Token: " + token + " Host: " + slaveHost + " Port: " + slavePort);
+                if (printOutput) System.out.println("ParallelSelectThread[" + workerId + "] - Token: " + token + " Host: " + workerHost + " Port: " + workerPort);
                 /** New connection string parameters: 
-                 * In addition to the URL's jdbc:exa and jdbc:exa-debug we have added for the parallel connections the URL jdbc:exa-slave .
-                 * You also have to specify slavetoken= , this is a long integer used to identify the connection group members.
-                 * The parameter slaveId is optional and does nothing. It can be seen in log files to help debugging.  
+                 * In addition to the URL's jdbc:exa and jdbc:exa-debug we have added for the parallel connections the URL jdbc:exa-worker .
+                 * You also have to specify workertoken= , this is a long integer used to identify the connection group members.
+                 * The parameter workerId is optional and does nothing. It can be seen in log files to help debugging.  
                  */
-                String connStr="jdbc:exa-slave:" + slaveHost + ":" + slavePort + ";slavetoken=" + token + 
-                        ";autocommit=0;encryption=1" + logging + ";slaveID=" + slaveId;
+                String connStr="jdbc:exa-worker:" + workerHost + ":" + workerPort + ";workertoken=" + token + 
+                        ";autocommit=0;encryption=1" + logging + ";workerID=" + workerId;
                 EXAConnection connection;
                 try {
                     connection = (EXAConnection)DriverManager.getConnection(connStr, "sys", "exasol");
@@ -290,7 +290,7 @@ public class ParallelConnectionsExample {
                 long rowCounter=0;
                 while (res.next())
                 {
-                    /*if (printOutput) System.out.print("ParallelSelectHandleThread[" + slaveId + "] - ");
+                    /*if (printOutput) System.out.print("ParallelSelectHandleThread[" + workerId + "] - ");
                     for (int i=1; i<=resmd.getColumnCount(); i++)
                     {
                         String val=res.getString(i) + " ";
@@ -304,10 +304,10 @@ public class ParallelConnectionsExample {
                 res.close();
                 stmt.close();
                 connection.close();
-                if (printOutput) System.out.println("ParallelSelectThread[" + slaveId + "] - did read " + rowCounter + " rows");
-                if (printOutput) System.out.println("ParallelSelectThread[" + slaveId + "] - closed");
+                if (printOutput) System.out.println("ParallelSelectThread[" + workerId + "] - did read " + rowCounter + " rows");
+                if (printOutput) System.out.println("ParallelSelectThread[" + workerId + "] - closed");
             } catch (Exception ex) {
-                if (printOutput) System.out.println("ParallelSelectThread[" + slaveId + "] - Unexpected exception: " + ex.toString());
+                if (printOutput) System.out.println("ParallelSelectThread[" + workerId + "] - Unexpected exception: " + ex.toString());
                 ex.printStackTrace();
             }
         }
@@ -320,18 +320,18 @@ public class ParallelConnectionsExample {
         private int handle=0; 
         
         ParallelSelectHandleThread(int sid, long t, String sh, int sp, int h) {
-            slaveId=sid;
+            workerId=sid;
             token=t;
-            slaveHost=sh;
-            slavePort=sp;
+            workerHost=sh;
+            workerPort=sp;
             handle=h;
         }
 
         public void run() {
             try {
-                if (printOutput) System.out.println("ParallelSelectHandleThread[" + slaveId + "] - Token: " + token + " Host: " + slaveHost + " Port: " + slavePort);
-                String connStr="jdbc:exa-slave:" + slaveHost + ":" + slavePort + ";slavetoken=" + token + 
-                        ";autocommit=0;encryption=1" + logging + ";slaveID=" + slaveId;
+                if (printOutput) System.out.println("ParallelSelectHandleThread[" + workerId + "] - Token: " + token + " Host: " + workerHost + " Port: " + workerPort);
+                String connStr="jdbc:exa-worker:" + workerHost + ":" + workerPort + ";workertoken=" + token + 
+                        ";autocommit=0;encryption=1" + logging + ";workerID=" + workerId;
                 EXAConnection connection;
                 try {
                     connection = (EXAConnection)DriverManager.getConnection(connStr, "sys", "exasol");
@@ -347,7 +347,7 @@ public class ParallelConnectionsExample {
                 long rowCounter=0;
                 while (res.next())
                 {
-                    /*if (printOutput) System.out.print("ParallelSelectHandleThread[" + slaveId + "] - ");
+                    /*if (printOutput) System.out.print("ParallelSelectHandleThread[" + workerId + "] - ");
                     for (int i=1; i<=resmd.getColumnCount(); i++)
                     {
                         String val=res.getString(i) + " ";
@@ -360,14 +360,13 @@ public class ParallelConnectionsExample {
                 //Free resources in the server.
                 res.close();
                 connection.close();
-                if (printOutput) System.out.println("ParallelSelectHandleThread[" + slaveId + "] - did read " + rowCounter + " rows");
-                if (printOutput) System.out.println("ParallelSelectHandleThread[" + slaveId + "] - closed");
+                if (printOutput) System.out.println("ParallelSelectHandleThread[" + workerId + "] - did read " + rowCounter + " rows");
+                if (printOutput) System.out.println("ParallelSelectHandleThread[" + workerId + "] - closed");
             } catch (Exception ex) {
-                if (printOutput) System.out.println("ParallelSelectHandleThread[" + slaveId + "] - Unexpected exception: " + ex.toString());
+                if (printOutput) System.out.println("ParallelSelectHandleThread[" + workerId + "] - Unexpected exception: " + ex.toString());
                 ex.printStackTrace();
             }
         }
     }
     
 }
-
