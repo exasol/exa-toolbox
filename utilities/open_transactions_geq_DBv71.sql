@@ -43,7 +43,7 @@ with
 							S.SESSION_ID,
 							case
 								when
-									(S.STATUS not in ('IDLE', 'DISCONNECTED')) OR
+									(S.STATUS not in ('IDLE', 'DISCONNECTED', 'QUEUED')) OR
 									(
 										S.COMMAND_NAME not in ('COMMIT', 'ROLLBACK', 'NOT SPECIFIED')
 									)
@@ -51,7 +51,13 @@ with
 									case
 										when
 											S.COMMAND_NAME in (
-												'SELECT', 'DESCRIBE', 'OPEN SCHEMA', 'CLOSE SCHEMA', 'FLUSH STATISTICS', 'EXECUTE SCRIPT'
+												'SELECT',
+												'DESCRIBE',
+												'OPEN SCHEMA',
+												'CLOSE SCHEMA',
+												'FLUSH STATISTICS',
+												'EXECUTE SCRIPT',
+												'EXPORT'
 											)
 										then
 											1
@@ -88,7 +94,8 @@ with
 																	'OPEN SCHEMA',
 																	'CLOSE SCHEMA',
 																	'FLUSH STATISTICS',
-																	'EXECUTE SCRIPT'
+																	'EXECUTE SCRIPT',
+																	'EXPORT'
 																)
 															then
 																1
