@@ -25,6 +25,7 @@
   * [importing_and_exporting_data_with_google_bigquery](#importing_and_exporting_data_with_google_bigquery)
   * [metadata_backup](#metadata_backup)
   * [ParallelConnectionsExample](#ParallelConnectionsExample)
+  * [webtest_py](#webtest_py)
 
 <!-- tocstop -->
 
@@ -331,3 +332,17 @@ An example Java program that showcases the subconnection concept to read and wri
 For more information on the usage of the program, please view the below knowledge base article:
 
 [Parallel connections with JDBC](https://exasol.my.site.com/s/article/Parallel-connections-with-JDBC)
+
+## webtest_py
+
+* [webtest_py.sql](webtest_py.sql)
+
+This script is to check network connectivity from an Exasol database to a host:port/path using the following steps:
+
+* Hostname lookup using DNS (Domain Name Service)
+* TCP connect to the resulting address
+* HTTP 1.1 request
+
+For more information on the usage of the program, please view the below knowledge base article:
+
+[Testing HTTP connections using python UDF](https://exasol.my.site.com/s/article/Testing-HTTP-connections-using-python-UDF)
