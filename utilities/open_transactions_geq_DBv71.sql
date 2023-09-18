@@ -131,10 +131,15 @@ with
 			)
 	)
 select
-	HAS_LOCKS,
-	case
+	HAS_LOCKS
+	, '(\d+):(\d+):(\d+)' as re
+	, numtodsinterval(to_number(regexp_replace(s.duration, local.re, '\1')), 'hour')
+	+ numtodsinterval(to_number(regexp_replace(s.duration, local.re, '\2')), 'minute')
+	+ numtodsinterval(to_number(regexp_replace(s.duration, local.re, '\3')), 'second')
+	as duration_int
+	, case
 		when
-			DURATION > '1:00:00' and
+			local.duration_int > interval '1' hour and
 			STATUS = 'IDLE'
 		then
 			decode(
