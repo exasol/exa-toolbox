@@ -132,10 +132,9 @@ with
 	)
 select
 	HAS_LOCKS
-	, '(\d+):(\d+):(\d+)' as re
-	, numtodsinterval(to_number(regexp_replace(s.duration, local.re, '\1')), 'hour')
-	+ numtodsinterval(to_number(regexp_replace(s.duration, local.re, '\2')), 'minute')
-	+ numtodsinterval(to_number(regexp_replace(s.duration, local.re, '\3')), 'second')
+	, numtodsinterval(to_number(regexp_replace(s.duration, '(\d+):(\d+):(\d+)', '\1')), 'hour')
+	+ numtodsinterval(to_number(regexp_replace(s.duration, '(\d+):(\d+):(\d+)', '\2')), 'minute')
+	+ numtodsinterval(to_number(regexp_replace(s.duration, '(\d+):(\d+):(\d+)', '\3')), 'second')
 	as duration_int
 	, case
 		when
