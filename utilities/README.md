@@ -40,11 +40,18 @@ Usage:
 ```sql
 SELECT bucketfs_ls('/buckets/bfsdefault');
 ```
-NOTE: The root of BucketFS is `/buckets/bfsdefault`.
+NOTE: The root of BucketFS is `/buckets`.
 
-The UDF is calling Unix/Linux `ls -F` command and thus the usual wildcard characters can be used into the path.
+The UDF uses python's `os` module to list the folder content.
+
+The file also contains a UDF called BUCKETFS_LS_OLD. It is calling Unix/Linux `ls -F` command and thus the usual wildcard characters can be used into the path. It isn't as pythonic as the former one but might be more flexible.
 
 [BuckerFS Explorer](https://github.com/exasol/bucketfs-explorer) is GUI application that allows not only to inspect the content of BucketFS, but also upload and delete files and change settings.
+
+There are other options as well: 
+
+* [bucketfs-client](https://github.com/exasol/bucketfs-client/blob/main/doc/user_guide/user_guide.md)
+* [bucketfs-python](https://exasol.github.io/bucketfs-python/user_guide/user_guide.html)
 
 ## check_connectivity
 ([check_connectivity.sql](check_connectivity.sql))
@@ -103,7 +110,7 @@ SELECT java_info(TRUE);
 NOTE: `python3_info()` is only available (out of the box) in Exasol 6.2 and later version. 
 
 ## number_of_cores
-([nuber_of_cores.sql](number_of_cores.sql))
+([number_of_cores.sql](number_of_cores.sql))
 This UDF returns the number of cores of the database node it executes on. As long as Exasol cluster use the same machine type for every node,
 this information should be reliable.
 
