@@ -47,8 +47,9 @@ def run(ctx):
 		#Sets a timeout of 5 seconds to connect to LDAP
 		ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 5.0)
 		
-		#The below line is only needed when connecting via ldaps
+		#The below lines are only needed when connecting via ldaps
 		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)   # required options for SSL without cert checking
+		ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 		
 		# Connects to LDAP
 		ldapClient = ldap.initialize(uri)
@@ -98,8 +99,9 @@ def run(ctx):
 		#Sets a timeout of 5 seconds to connect to LDAP
 		ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 5.0)
 		
-		#The below line is only needed when connecting via ldaps
+		#The below lines are only needed when connecting via ldaps
 		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)   # required options for SSL without cert checking
+		ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 		
 		# Connects to LDAP
 		ldapClient = ldap.initialize(uri)
