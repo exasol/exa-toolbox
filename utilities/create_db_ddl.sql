@@ -720,7 +720,7 @@ function write_table(p_type_in, p_txt_in)
         if store_in_table == true then
         idx = idx + 1
         suc, res = pquery([[INSERT INTO DB_HISTORY.DATABASE_DDL VALUES (:ct, :rn, :type, :txt)]]
-                      ,{ct = t[1].CURRENT_TIMESTAMP, rn = idx, type = p_type_in, txt=p_txt_in})
+                      ,{ct = t[1].CT, rn = idx, type = p_type_in, txt=p_txt_in})
                 if (suc) then
                 else
                         output(string.len(p_txt_in))
@@ -966,7 +966,7 @@ if store_in_table == true then
         end
 end
 
-t=query([[/*snapshot execution*/SELECT CURRENT_USER,CURRENT_TIMESTAMP]])
+t=query([[/*snapshot execution*/SELECT CURRENT_USER AS CU,CURRENT_TIMESTAMP AS CT]])
 
 constraints_separately = true
 return_in_one_row = true
@@ -974,7 +974,7 @@ return_in_one_row = true
 ddl = ''
 summary = {{'START'}}
 sqlstr =[[]]
-sqlstr_add('\n--DDL created by user '..t[1].CURRENT_USER..' at '..t[1].CURRENT_TIMESTAMP..'\n\n')
+sqlstr_add('\n--DDL created by user '..t[1].CU..' at '..t[1].CT..'\n\n')
 sqlstr_commit()
 sqlstr_flush()
 
