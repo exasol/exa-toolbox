@@ -275,8 +275,8 @@ end
 -- MAIN --------------------------------------------------------------------------------------------------------------------------------------------
 
 -- add header
-local t = query([[SELECT CURRENT_USER,CURRENT_TIMESTAMP]])
-print( '--DDL created by user '..t[1].CURRENT_USER..' at '..t[1].CURRENT_TIMESTAMP )
+local t = query([[SELECT CURRENT_USER AS CU,CURRENT_TIMESTAMP AS CT]])
+print( '--DDL created by user '..t[1].CU..' at '..t[1].CT )
 
 
 -- init: make sure the view exists and is valid (including all dependencies)
