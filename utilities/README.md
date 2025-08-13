@@ -356,7 +356,7 @@ For more information on the usage of the program, please view the below knowledg
 [Testing HTTP connections using python UDF](https://exasol.my.site.com/s/article/Testing-HTTP-connections-using-python-UDF)
 
 ## get_and_alter_connection_details
-([get_and_alter_connection_details.sql](get_and_alter_connection_details.sql))
+* [get_and_alter_connection_details.sql](get_and_alter_connection_details.sql)
 
 This tool will help you to generate proper ALTER CONNECTION statements for your existing Exasol connection objects (incl. USERNAME & PASSWORD) in case you have to change e.g. only the IP Address or Hostname in the connection string.
 
