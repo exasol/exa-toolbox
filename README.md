@@ -41,7 +41,7 @@ The EXA-toolbox is a collection of useful scripts and views that you can add to 
 - [Utilities](utilities/README.md#utilities)
   * [bucketfs_ls](utilities/README.md#bucketfs_ls)
   * [check_connectivity](utilities/README.md#check_connectivity)
-  * [check_tcp_listener_connection](utilities/README.md#check_tcp_listener_connection) 
+  * [check_tcp_listener_connection](utilities/README.md#check_tcp_listener_connection)
   * [upload_github_release_file_to_bucketfs](utilities/README.md#upload_github_release_file_to_bucketfs)
   * [language_info](utilities/README.md#language_info)
   * [number_of_cores](utilities/README.md#number_of_cores)
@@ -60,5 +60,5 @@ The EXA-toolbox is a collection of useful scripts and views that you can add to 
   * [metadata_backup](utilities/README.md#metadata_backup)
   * [ParallelConnectionsExample](utilities/README.md#ParallelConnectionsExample)
   * [webtest_py](utilities/README.md#webtest_py)
+  * [get_and_alter_connection_details](utilities/README.md#get_and_alter_connection_details)
 - [Preprocessing](preprocessing)
-
