@@ -26,10 +26,11 @@
   * [metadata_backup](#metadata_backup)
   * [ParallelConnectionsExample](#ParallelConnectionsExample)
   * [webtest_py](#webtest_py)
+  * [get_and_alter_connection_details](#get_and_alter_connection_details)
 
 <!-- tocstop -->
 
-# Utilities 
+# Utilities
 
 ## bucketfs_ls
 ([bucketfs_ls.sql](bucketfs_ls.sql))
@@ -48,7 +49,7 @@ The file also contains a UDF called BUCKETFS_LS_OLD. It is calling Unix/Linux `l
 
 [BuckerFS Explorer](https://github.com/exasol/bucketfs-explorer) is GUI application that allows not only to inspect the content of BucketFS, but also upload and delete files and change settings.
 
-There are other options as well: 
+There are other options as well:
 
 * [bucketfs-client](https://github.com/exasol/bucketfs-client/blob/main/doc/user_guide/user_guide.md)
 * [bucketfs-python](https://exasol.github.io/bucketfs-python/user_guide/user_guide.html)
@@ -81,23 +82,23 @@ Example:
 ## upload_github_release_file_to_bucketfs
 ([upload_github_release_file_to_bucketfs.sql](upload_github_release_file_to_bucketfs.sql))
 
-This UDF can be used for uploading a file from a Github release page to a selected bucket. 
+This UDF can be used for uploading a file from a Github release page to a selected bucket.
 
-You need to create a connection with an url of the bucket and credentials for a writing access and use a name of the connection as an argument in the UDF. 
+You need to create a connection with an url of the bucket and credentials for a writing access and use a name of the connection as an argument in the UDF.
 
 Usage:
 ```sql
 SELECT upload_github_release_file_to_bucketfs('BUCKET_CONNECTION', 'python3-ds-EXASOL-6.1.0', 'exasol', 'script-languages', 'latest', 'path/in/bucket/');
 ```
 NOTE:
-* If you don't want to provide a path inside a bucket, please use an empty string: ''; 
+* If you don't want to provide a path inside a bucket, please use an empty string: '';
 
 ## language_info
 ([language_info.sql](language_info.sql))
 
 These UDFs list the available information of their langauge environment, including the name and &ndash; if available &ndash; the version of the libraries/modules/packages supplied with them. You can use these to check if the language version is compatible with your code, and if the libraries/modules/packages required by your code are available.
 
-All UDFs expect a single Boolean parameter. `TRUE` indicates to retrieve all available information, while `FALSE` only produces the language version. 
+All UDFs expect a single Boolean parameter. `TRUE` indicates to retrieve all available information, while `FALSE` only produces the language version.
 
 Usage:
 ```sql
@@ -107,7 +108,7 @@ SELECT python3_info(TRUE);
 SELECT lua_info(TRUE);
 SELECT java_info(TRUE);
 ```
-NOTE: `python3_info()` is only available (out of the box) in Exasol 6.2 and later version. 
+NOTE: `python3_info()` is only available (out of the box) in Exasol 6.2 and later version.
 
 ## number_of_cores
 ([number_of_cores.sql](number_of_cores.sql))
@@ -148,7 +149,7 @@ NOTE: if `NULL` is provided for role, then anyone can publish into the channel.
 EXECUTE SCRIPT pub2slack('general','Test');
 ```
  * Make sure that your endusers have `EXECUTE` privilege on `pub2slack()` and no other privileges are provided (e.g. any kind of privilege on the `pub2slack_channels` table).
- * `pub2slack()` is a wrapper Lua script to make the use of this functionality simple. It checks the validity of input parameters, access right to the channel; and it retrieves the webhook to call the inner Python UDF `pub2slackfn()` that provides the actual communication service. 
+ * `pub2slack()` is a wrapper Lua script to make the use of this functionality simple. It checks the validity of input parameters, access right to the channel; and it retrieves the webhook to call the inner Python UDF `pub2slackfn()` that provides the actual communication service.
 
 
 
@@ -228,7 +229,7 @@ For more information on the usage of the script, please view the below knowledge
 ## create_view_ddl
 ([create_view_ddl.sql](create_view_ddl.sql))
 
-This script creates DDL statements for recursive dependencies of a view. 
+This script creates DDL statements for recursive dependencies of a view.
 The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
 For more information on the usage of the script, please view the below knowledge base article:
 
@@ -237,7 +238,7 @@ For more information on the usage of the script, please view the below knowledge
 ## create_db_ddl
 ([create_db_ddl.sql](create_db_ddl.sql))
 
-This script creates DDL statements for an entire database. 
+This script creates DDL statements for an entire database.
 The DDL are presented as a single-column result-set and are ready for copy/paste into a text editor or SQL-editor for saving.
 For more information on the usage of the script, please view the below knowledge base article:
 
@@ -266,18 +267,18 @@ It is possible to import data to Exasol in parallel by creating multiple sub tab
 
 **Script:**
 
-With the help of input parameters the script generates sql statements wich creates multiple sub tables and combines all in one view. Necessary for the execution is the origin schema and origin table you want to import parallel into. Additional you need either the number of tables you want to generate or an array with diffrent tables names you want to set. Tables generated with the help of the number will look similar to this: "SCHEMA"."TABLE_1","SCHEMA"."TABLE_2","SCHEMA"."TABLE_3", etc. . 
+With the help of input parameters the script generates sql statements wich creates multiple sub tables and combines all in one view. Necessary for the execution is the origin schema and origin table you want to import parallel into. Additional you need either the number of tables you want to generate or an array with diffrent tables names you want to set. Tables generated with the help of the number will look similar to this: "SCHEMA"."TABLE_1","SCHEMA"."TABLE_2","SCHEMA"."TABLE_3", etc. .
 
 **Execution:**
 
 !!! IMPORTANT: when the script is executed the tables and the view is generated immediately !!!
 
-For the execution you can either set a number of sub tables or an array with values. If the number is null the script will generate the table as described in the array. Following there will be two examples on how to use the script. 
+For the execution you can either set a number of sub tables or an array with values. If the number is null the script will generate the table as described in the array. Following there will be two examples on how to use the script.
 
 Execution with the number set:
 ```sql
 EXECUTE SCRIPT EXA_TOOLBOX.GENERATE_VIEW (  'RETAIL' -- original schema
-                                ,'PRODUCTS' -- origin table 
+                                ,'PRODUCTS' -- origin table
                                 ,20 -- Specify the number of sub tables (if null array will be used)
                                 ,ARRAY(NULL) -- array if you want to specify the names of the subtables
                                 ) with output;
@@ -287,7 +288,7 @@ EXECUTE SCRIPT EXA_TOOLBOX.GENERATE_VIEW (  'RETAIL' -- original schema
 Execution when using an array:
 ```sql
 EXECUTE SCRIPT EXA_TOOLBOX.GENERATE_VIEW (  'RETAIL' -- original schema
-                                ,'PRODUCTS' -- origin table 
+                                ,'PRODUCTS' -- origin table
                                 ,NULL-- Specify the number of sub tables (if null array will be used)
                                 ,ARRAY('PRODUCTS_BOOKS', 'PRODUCTS_FASHION', 'PRODUCTS_HEALTHCARE') -- array if you want to specify the names of the subtables
                                 ) with output;
@@ -353,3 +354,17 @@ This script is to check network connectivity from an Exasol database to a host:p
 For more information on the usage of the program, please view the below knowledge base article:
 
 [Testing HTTP connections using python UDF](https://exasol.my.site.com/s/article/Testing-HTTP-connections-using-python-UDF)
+
+## get_and_alter_connection_details
+* [get_and_alter_connection_details.sql](get_and_alter_connection_details.sql)
+
+This tool will help you to generate proper ALTER CONNECTION statements for your existing Exasol connection objects (incl. USERNAME & PASSWORD) in case you have to change e.g. only the IP Address or Hostname in the connection string.
+
+See also:
+* https://docs.exasol.com/db/latest/database_concepts/udf_scripts/lua.htm#Accessin
+* https://docs.exasol.com/db/latest/sql/alter_connection.htm
+
+
+Usage and Examples:
+
+See within the SQL File.
