@@ -361,8 +361,8 @@ For more information on the usage of the program, please view the below knowledg
 This tool will help you to generate proper ALTER CONNECTION statements for your existing Exasol connection objects (incl. USERNAME & PASSWORD) in case you have to change e.g. only the IP Address or Hostname in the connection string.
 
 See also:
-https://docs.exasol.com/db/latest/database_concepts/udf_scripts/lua.htm#Accessin
-https://docs.exasol.com/db/latest/sql/alter_connection.htm
+* https://docs.exasol.com/db/latest/database_concepts/udf_scripts/lua.htm#Accessin
+* https://docs.exasol.com/db/latest/sql/alter_connection.htm
 
 
 Usage and Examples:
