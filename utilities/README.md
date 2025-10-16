@@ -38,18 +38,18 @@
 This UDF can be used to list the content (i.e. the folders and files) of a [BucketFS](https://docs.exasol.com/administration/on-premise/bucketfs/bucketfs.htm) bucket (or a folder inside it).
 
 Usage:
+
 ```sql
 SELECT bucketfs_ls('/buckets/bfsdefault');
 ```
+
 NOTE: The root of BucketFS is `/buckets`.
 
 The UDF uses python's `os` module to list the folder content.
 
-The file also contains a UDF called BUCKETFS_LS_OLD. It is calling Unix/Linux `ls -F` command and thus the usual wildcard characters can be used into the path. It isn't as pythonic as the former one but might be more flexible.
+The file also contains a UDF called BUCKETFS_LS_OLD. It is calling Linux `ls -F` command and thus the usual wildcard characters can be used into the path. It isn't as pythonic as the former one but might be more flexible.
 
-[BuckerFS Explorer](https://github.com/exasol/bucketfs-explorer) is GUI application that allows not only to inspect the content of BucketFS, but also upload and delete files and change settings.
-
-There are other options as well:
+There are alternative options to explore the content of Bucket:
 
 * [bucketfs-client](https://github.com/exasol/bucketfs-client/blob/main/doc/user_guide/user_guide.md)
 * [bucketfs-python](https://exasol.github.io/bucketfs-python/user_guide/user_guide.html)
