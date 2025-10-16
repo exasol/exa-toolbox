@@ -12,12 +12,18 @@
 CREATE SCHEMA IF NOT EXISTS EXA_toolbox;
 
 --/
-CREATE OR REPLACE PYTHON3 SCALAR SCRIPT EXA_toolbox.bucketfs_ls(my_path VARCHAR(256)) EMITS (files VARCHAR(256)) AS
+CREATE OR REPLACE PYTHON3 SCALAR SCRIPT EXA_toolbox.bucketfs_ls(my_path VARCHAR(256)) EMITS (size_bytes decimal, is_dir boolean, file_name VARCHAR(256)) AS
+
 import os
 
 def run(ctx):
-	for line in os.listdir(ctx.my_path):
-		ctx.emit(line)
+	
+	if os.path.isfile(ctx.my_path):
+		ctx.emit(os.stat(ctx.my_path).st_size, False, os.path.basename(ctx.my_path))
+		return
+
+	for entry in os.scandir(ctx.my_path):
+		ctx.emit(entry.stat().st_size if entry.is_file() else None, entry.is_dir(), entry.name)
 /
 
 -- Example:
