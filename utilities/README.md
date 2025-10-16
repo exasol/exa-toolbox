@@ -49,7 +49,7 @@ The UDF uses python's `os` module to list the folder content.
 
 The file also contains a UDF called BUCKETFS_LS_OLD. It is calling Linux `ls -F` command and thus the usual wildcard characters can be used into the path. It isn't as pythonic as the former one but might be more flexible.
 
-There are alternative options to explore the content of Bucket:
+There are alternative options to explore the content of BucketFS:
 
 * [bucketfs-client](https://github.com/exasol/bucketfs-client/blob/main/doc/user_guide/user_guide.md)
 * [bucketfs-python](https://exasol.github.io/bucketfs-python/user_guide/user_guide.html)
