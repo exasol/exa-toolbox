@@ -99,15 +99,22 @@ CHANGE LOG:
 		If users want to exclude grants on invalid views they need to adapt the part of script responsible for object privileges.
 */
 
--- sqlstring concatination
+-- sqlstring concatenation
 function check_version()
-        version_suc, version = pquery([[/*snapshot execution*/SELECT SUBSTR(PARAM_VALUE, 0, 3) VERSION_NUMBER, PARAM_VALUE version_full FROM EXA_METADATA WHERE PARAM_NAME = 'databaseProductVersion']])
+        version_suc, version = pquery([[/*snapshot execution*/select
+	max(case when m.PARAM_NAME = 'databaseProductVersion' then m.PARAM_VALUE end) as version_full
+	, to_number(max(case when m.PARAM_NAME = 'databaseMajorVersion' then m.PARAM_VALUE end)) as version_major
+	, to_number(max(case when m.PARAM_NAME = 'databaseMinorVersion' then m.PARAM_VALUE end)) as version_minor
+from
+	EXA_METADATA m]])
 
         if not (version_suc) then
                 error('error determining version')
         else
-                version_short = version[1].VERSION_NUMBER
+                --version_short = version[1].VERSION_NUMBER
                 version_full = version[1].VERSION_FULL
+                version_major = version[1].VERSION_MAJOR
+                version_minor = version[1].VERSION_MINOR
         end
 end
 
@@ -124,7 +131,7 @@ end
 function ddl_flush()
         ddl = ''
 end
--- adds sqlstring to dll or adds sqlstring to summary table
+-- adds sqlstring to ddl or adds sqlstring to summary table
 function sqlstr_commit()
         ddllength=string.len(ddl)+string.len(sqlstr)
           -- Check if the length of the total string is greater than 2,000,000, insert into the table first to avoid string being too long
@@ -224,7 +231,7 @@ function add_all_users()                                        -- ADD ALL USERS
 									sqlstr_add(' IDENTIFIED AT LDAP AS \''..ldap_string..'\' FORCE;\n')
                                 elseif (aau1_res[i].KERBEROS_PRINCIPAL)~=null then  -- if Kerberos info given, include Kerberos information
 									sqlstr_add(' IDENTIFIED BY KERBEROS PRINCIPAL \''..aau1_res[i].KERBEROS_PRINCIPAL..'\';\n')
-								elseif (version_short >= ('7.1')) then
+								elseif (version_major >= 7 and (version_major > 7 or version_minor >= 1)) then
 									if (aau1_res[i].OPENID_SUBJECT)~=null then  -- if OpenID info given, include OpenID information
 										sqlstr_add(' IDENTIFIED BY OPENID SUBJECT \''..aau1_res[i].OPENID_SUBJECT..'\';\n')
 									else
@@ -240,7 +247,7 @@ function add_all_users()                                        -- ADD ALL USERS
                                 end
 
                                 -- change V7
-                                if (version_short >= ('7.0')) then
+                                if (version_major >= 7) then
                                     sqlstr_commit()
                                     if aau1_res[i].USER_CONSUMER_GROUP~=null then
                                         sqlstr_add('\t\tALTER USER "'..aau1_res[i].USER_NAME..'" SET CONSUMER_GROUP = "'..aau1_res[i].USER_CONSUMER_GROUP..'";\n')
@@ -248,7 +255,7 @@ function add_all_users()                                        -- ADD ALL USERS
                                  else
                                     if aau1_res[i].USER_PRIORITY~=null then
                                         sqlstr_commit()
-                                        if (version_short ~= ('6.0')) and (version_short ~= ('5.0')) then
+                                        if not((version_major == 5 or version_major == 6) and version_minor == 0) then
                                             sqlstr_add('\t\tGRANT PRIORITY GROUP '..aau1_res[i].USER_PRIORITY..' TO "'..aau1_res[i].USER_NAME..'";\n')
                                         else
                                             sqlstr_add('\t\tGRANT PRIORITY '..aau1_res[i].USER_PRIORITY..' TO "'..aau1_res[i].USER_NAME..'";\n')
@@ -256,7 +263,7 @@ function add_all_users()                                        -- ADD ALL USERS
                                      end
                                   end
 
-                                if (version_short ~= ('6.0')) and (version_short ~= ('5.0'))  then
+                                if not((version_major == 5 or version_major == 6) and version_minor == 0) then
                                         if aau1_res[i].PASSWORD_EXPIRY_POLICY ~= null then
 
                                                 sqlstr_commit()
@@ -280,7 +287,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
 
         -- role privileges
 
-        art1_success, art1_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_ROLE_PRIVS WHERE NOT (GRANTEE='SYS' AND GRANTED_ROLE='DBA')]])
+        art1_success, art1_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_ROLE_PRIVS WHERE NOT (GRANTEE='SYS' AND GRANTED_ROLE='DBA') order by 1, 2]])
         if not art1_success then
                 error('Error in art1')
         end
@@ -376,7 +383,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
         end
 
         -- impersonation privileges (version >= 6.1)
-        if (version_short >= ('6.1')) then
+        if (version_major >= 6 and (version_major > 6 or version_minor >= 1)) then
 
                 art4_success, art4_res = pquery([[/*snapshot execution*/SELECT 'GRANT IMPERSONATION ON "'|| IMPERSONATION_ON || '" TO "' || GRANTEE || '";' EXPR FROM EXA_DBA_IMPERSONATION_PRIVS]])
 
@@ -568,13 +575,13 @@ function add_table_to_DDL(schema_name, tbl_name, tbl_comment)   --ADD TABLE-----
                 if #distr > 0 then
                 	sqlstr_add(',\n\t\tDISTRIBUTE BY '..table.concat(distr, ', '))
                 end
-
-                if (version_short ~= ('6.0')) and (version_short ~= ('5.0')) then                                      --partition by
+                
+                -- Partitions
+                if not((version_major == 5 or version_major == 6) and version_minor == 0) then                                      --partition by
                         at2_success, at2_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_COLUMNS WHERE COLUMN_SCHEMA=:s AND COLUMN_TABLE=:t AND COLUMN_PARTITION_KEY_ORDINAL_POSITION IS NOT NULL ORDER BY COLUMN_PARTITION_KEY_ORDINAL_POSITION]], {s=schema_name, t=tbl_name})
                         if not at2_success then
                                 error('Error at at2 -- probably table not found')
                         elseif #at2_res > 0 then
-
 							
                                 for p=1,#at2_res do
                                         table.insert(part, '"'..at2_res[p].COLUMN_NAME..'"')
@@ -593,6 +600,32 @@ function add_table_to_DDL(schema_name, tbl_name, tbl_comment)   --ADD TABLE-----
                 sqlstr_add(';\n')
                 sqlstr_lf()
                 sqlstr_commit()
+                
+                sqlstr_add(' )')
+                if tbl_comment ~= null then                                                                                                             -- table comment
+                        sqlstr_add('\n\tCOMMENT IS \''..tbl_comment..'\'')
+                end
+                sqlstr_add(';\n')
+                
+                -- Zonemaps
+                if (version_major >= 8) then
+                        at3_success, at3_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_COLUMNS WHERE COLUMN_SCHEMA=:s AND COLUMN_TABLE=:t AND COLUMN_PARTITION_KEY_ORDINAL_POSITION IS NOT NULL and not COLUMN_IS_ZONEMAPPED ORDER BY COLUMN_PARTITION_KEY_ORDINAL_POSITION]], {s=schema_name, t=tbl_name})
+                        if not at3_success then
+                                error('Error at at3 -- probably table not found')
+                        elseif #at3_res > 0 then
+								
+                        		sqlstr_lf()
+                        
+                                for p=1,#at3_res do
+                                        sqlstr_add([[DROP ZONEMAP ON "]]..at1_res[1].COLUMN_SCHEMA..[["."]]..at1_res[1].COLUMN_TABLE..[["("]]..at3_res[p].COLUMN_NAME..'");')
+                                        sqlstr_lf()
+                                end
+                        end
+                end
+                
+                sqlstr_lf()
+                sqlstr_commit()
+                
         end
 end
 
@@ -697,7 +730,7 @@ function add_schema_to_DDL(schemaname, schema_comment)          --ADD SCHEMA----
                 sqlstr_add('COMMENT ON SCHEMA \"'..schemaname..'\" IS \''..schema_comment..'\';\n')
         end
 
-        if (version_short ~= ('6.0')) and (version_short ~= ('5.0')) then              -- Add schema size limit
+        if not((version_major == 5 or version_major == 6) and version_minor == 0) then              -- Add schema size limit
                 ads1_suc, ads1_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_OBJECT_SIZES WHERE OBJECT_TYPE = 'SCHEMA' AND OBJECT_NAME = :s]],{s=schemaname})
 
                 if not (ads1_suc) then
@@ -804,7 +837,7 @@ function add_system_parameters()                                --ADD SYSTEM PAR
 end
 
 function add_all_virtual_schemas()              -- ADD ALL VIRTUAL SCHEMAS -----------------------------------------------------------------------------------------
-		if (version_short >='8.0') then
+		if (version_major >= 8) then
 			avs1_success, avs1_res = pquery([[/*snapshot execution*/select
 'CREATE VIRTUAL SCHEMA "' || s.SCHEMA_NAME || '" USING "' || ADAPTER_SCRIPT_SCHEMA || '"."' || ADAPTER_SCRIPT_NAME || '"
 WITH
@@ -881,7 +914,7 @@ function add_all_consumer_groups()                              -- ADD CONSUMER 
                 end
                 
                 -- new in V7.1
-                if (version_short >= ('7.1')) then
+                if (version_major >= 7 and (version_major > 7 or version_minor >= 1)) then
                    if (aapg1_res[i].IDLE_TIMEOUT ~= NULL) then
                        sql_cons_group = sql_cons_group..' ,IDLE_TIMEOUT = '..aapg1_res[i].IDLE_TIMEOUT
                    end
@@ -915,7 +948,7 @@ check_version()
 -- Prepare Output Table if requested
 if store_in_table == true then
 
-        if version_short ~= '5.0' then
+        if not(version_major == 5 and version_minor == 0) then
 
                 cschemsucc,cschemres = pquery([[CREATE SCHEMA IF NOT EXISTS "DB_HISTORY";]])
                 if (cschemsucc) then
@@ -982,7 +1015,7 @@ sqlstr_flush()
 check_version()
 
 sqlstr_add([[--Database Version: ]]..version_full..'\n')
-if version_short == '5.0' then
+if (version_major == 5 and version_minor == 0) then
         sqlstr_add([[--WARNING: Version 5 is not supported]].. '\n')
 end
 
@@ -998,12 +1031,12 @@ add_system_parameters()
 write_table('SYSTEM PARAMETERS', ddl)
                                                                                 -- roles, users
 if add_user_structure then
-        if (version_short == ('6.1') or version_short == ('6.2')) then
+        if (version_major == 6 and (version_minor == 1 or version_minor == 2)) then
                 add_all_priority_groups()
                 write_table('PRIORTY GROUPS', ddl)
-        elseif (version_short == ('6.0') or version_short == ('5.0')) then
+        elseif ((version_major == 5 or version_major == 6) and version_minor == 0) then
               a=1
-        elseif (version_short >= ('7.0')) then
+        elseif (version_major >= 7) then
               add_all_consumer_groups()
               write_table('CONSUMER GROUPS',ddl)
         else
@@ -1016,7 +1049,7 @@ if add_user_structure then
 end
 
                                                                                 -- schemas
-if version_short == '5.0' then
+if (version_major == 5 and version_minor == 0) then
         m1_success, m1_res = pquery([[select OBJECT_NAME, OBJECT_COMMENT from EXA_DBA_OBJECTS WHERE OBJECT_TYPE = 'SCHEMA' ORDER BY OBJECT_NAME]])
 else
 
@@ -1074,7 +1107,7 @@ else
     write_table('CONNECTIONS',ddl)
 
     --add all virtual schemas
-    if version_short ~= '5.0' then
+    if not(version_major == 5 and version_minor == 0) then
       add_all_virtual_schemas()
       write_table('VIRTUAL SCHEMAS', ddl)
     end
@@ -1118,58 +1151,6 @@ for i=1, #summary_new do
         summary[#summary+1] = {summary_new[i]}
 end
 table.remove(summary,1)
-return summary, "DDL varchar(2000000)"
-
-/
-
---/
-CREATE OR REPLACE LUA SCRIPT exa_toolbox."BACKUP_SYS" (file_location) RETURNS TABLE AS
-
-summary={}
-
-local suc1, res1 = pquery([[select schema_name, object_name from exa_syscat
-                                                           where instr(object_name,'EXA_USER_') = 0
-                                                             and instr(object_name,'EXA_ALL_') = 0
-                                                             and instr(object_name,'AUDIT') = 0
-                        ; ]])
-
-if suc1 then
-        for i=1, #res1 do
-                summary[#summary+1] = {[[export ]]..res1[i].SCHEMA_NAME..[[.]]..res1[i].OBJECT_NAME..[[ into local csv file ']]..file_location..[[]]..res1[i][2]..[[.csv.gz' truncate;]]}
-        end
-else
-        local error_msg = "ERR: ["..res1.error_code.."] "..res1.error_message
-        exit(query([[SELECT :error as ERROR FROM DUAL;]], {error=error_msg}))
-end
-
-return summary, "DDL varchar(2000000)"
-
-/
-
---/
-CREATE OR REPLACE LUA SCRIPT exa_toolbox."RESTORE_SYS" RETURNS TABLE AS
-
-summary={}
-
-summary[#summary+1] = {[[ALTER SESSION SET PROFILE='on';]]}
-summary[#summary+1] = {[[CREATE SCHEMA IF NOT EXISTS SYS_OLD;]]}
-
-local suc1, res1 = pquery([[select schema_name, object_name from exa_syscat
-                                                           where instr(object_name,'EXA_USER_') = 0
-                                                             and instr(object_name,'EXA_ALL_') = 0
-                                                             and instr(object_name,'AUDIT') = 0
-                        ; ]])
-
-if suc1 then
-        for i=1, #res1 do
-                summary[#summary+1] = {[[create or replace table SYS_OLD.]]..res1[i][2]..[[ like ]]..res1[i][1]..[[.]]..res1[i][2]..[[;]]}
-                summary[#summary+1] = {[[import into SYS_OLD.]]..res1[i][2]..[[ from local csv file ']]..'&'..[[1/]]..res1[i][2]..[[.csv.gz';]]}
-        end
-else
-        local error_msg = "ERR: ["..res1.error_code.."] "..res1.error_message
-        exit(query([[SELECT :error as ERROR FROM DUAL;]], {error=error_msg}))
-end
-
 return summary, "DDL varchar(2000000)"
 
 /
