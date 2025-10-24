@@ -11,7 +11,6 @@ OPEN SCHEMA exa_toolbox;
 --/
 CREATE OR REPLACE LUA SCRIPT exa_toolbox.CREATE_DB_DDL (add_user_structure,add_rights,store_in_table) RETURNS TABLE AS
 /*
-/*
 PARAMETERS:
         - add_user_structure: boolean
           If true then DDL for adding roles and users is added (at the top, before everything else).
@@ -111,7 +110,6 @@ from
         if not (version_suc) then
                 error('error determining version')
         else
-                --version_short = version[1].VERSION_NUMBER
                 version_full = version[1].VERSION_FULL
                 version_major = version[1].VERSION_MAJOR
                 version_minor = version[1].VERSION_MINOR
@@ -598,28 +596,32 @@ function add_table_to_DDL(schema_name, tbl_name, tbl_comment)   --ADD TABLE-----
                         sqlstr_add('\n\tCOMMENT IS \''..tbl_comment..'\'')
                 end
                 sqlstr_add(';\n')
-                sqlstr_lf()
-                sqlstr_commit()
-                
-                sqlstr_add(' )')
-                if tbl_comment ~= null then                                                                                                             -- table comment
-                        sqlstr_add('\n\tCOMMENT IS \''..tbl_comment..'\'')
-                end
-                sqlstr_add(';\n')
                 
                 -- Zonemaps
                 if (version_major >= 8) then
-                        at3_success, at3_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_COLUMNS WHERE COLUMN_SCHEMA=:s AND COLUMN_TABLE=:t AND COLUMN_PARTITION_KEY_ORDINAL_POSITION IS NOT NULL and not COLUMN_IS_ZONEMAPPED ORDER BY COLUMN_PARTITION_KEY_ORDINAL_POSITION]], {s=schema_name, t=tbl_name})
+                        at3_success, at3_res = pquery([[/*snapshot execution*/SELECT
+	*
+FROM
+	EXA_DBA_COLUMNS
+WHERE
+	COLUMN_SCHEMA =:s
+	AND COLUMN_TABLE =:t
+	AND ((COLUMN_PARTITION_KEY_ORDINAL_POSITION IS NOT NULL AND NOT COLUMN_IS_ZONEMAPPED) or (COLUMN_PARTITION_KEY_ORDINAL_POSITION IS NULL AND COLUMN_IS_ZONEMAPPED))
+ORDER BY
+	COLUMN_ORDINAL_POSITION]], {s=schema_name, t=tbl_name})
                         if not at3_success then
                                 error('Error at at3 -- probably table not found')
                         elseif #at3_res > 0 then
-								
                         		sqlstr_lf()
-                        
                                 for p=1,#at3_res do
-                                        sqlstr_add([[DROP ZONEMAP ON "]]..at1_res[1].COLUMN_SCHEMA..[["."]]..at1_res[1].COLUMN_TABLE..[["("]]..at3_res[p].COLUMN_NAME..'");')
-                                        sqlstr_lf()
+                                	if at3_res[1].COLUMN_IS_ZONEMAPPED then
+                                		sqlstr_add([[ENFORCE ZONEMAP ON "]]..at3_res[1].COLUMN_SCHEMA..[["."]]..at3_res[1].COLUMN_TABLE..[["("]]..at3_res[p].COLUMN_NAME..'");')
+                                	else
+                                		sqlstr_add([[DROP ZONEMAP ON "]]..at3_res[1].COLUMN_SCHEMA..[["."]]..at3_res[1].COLUMN_TABLE..[["("]]..at3_res[p].COLUMN_NAME..'");')
+                                	end
+                                	
                                 end
+                                sqlstr_lf()
                         end
                 end
                 
@@ -848,7 +850,8 @@ from
 EXA_DBA_VIRTUAL_SCHEMAS s
 join
 EXA_DBA_VIRTUAL_SCHEMA_PROPERTIES p on s.SCHEMA_NAME=p.SCHEMA_NAME
-group by s.schema_name, ADAPTER_SCRIPT_SCHEMA, ADAPTER_SCRIPT_NAME;]])
+group by s.schema_name, ADAPTER_SCRIPT_SCHEMA, ADAPTER_SCRIPT_NAME
+order by 1;]])
 		else
 		
         	avs1_success, avs1_res = pquery([[/*snapshot execution*/select
@@ -861,7 +864,8 @@ from
 EXA_DBA_VIRTUAL_SCHEMAS s
 join
 EXA_DBA_VIRTUAL_SCHEMA_PROPERTIES p on s.SCHEMA_NAME=p.SCHEMA_NAME
-group by s.schema_name, adapter_script;]])
+group by s.schema_name, adapter_script
+order by 1;]])
 
 end
         output(#avs1_res)
@@ -1151,6 +1155,58 @@ for i=1, #summary_new do
         summary[#summary+1] = {summary_new[i]}
 end
 table.remove(summary,1)
+return summary, "DDL varchar(2000000)"
+
+/
+
+--/
+CREATE OR REPLACE LUA SCRIPT exa_toolbox."BACKUP_SYS" (file_location) RETURNS TABLE AS
+
+summary={}
+
+local suc1, res1 = pquery([[select schema_name, object_name from exa_syscat
+                                                           where instr(object_name,'EXA_USER_') = 0
+                                                             and instr(object_name,'EXA_ALL_') = 0
+                                                             and instr(object_name,'AUDIT') = 0
+                        ; ]])
+
+if suc1 then
+        for i=1, #res1 do
+                summary[#summary+1] = {[[export ]]..res1[i].SCHEMA_NAME..[[.]]..res1[i].OBJECT_NAME..[[ into local csv file ']]..file_location..[[]]..res1[i][2]..[[.csv.gz' truncate;]]}
+        end
+else
+        local error_msg = "ERR: ["..res1.error_code.."] "..res1.error_message
+        exit(query([[SELECT :error as ERROR FROM DUAL;]], {error=error_msg}))
+end
+
+return summary, "DDL varchar(2000000)"
+
+/
+
+--/
+CREATE OR REPLACE LUA SCRIPT exa_toolbox."RESTORE_SYS" RETURNS TABLE AS
+
+summary={}
+
+summary[#summary+1] = {[[ALTER SESSION SET PROFILE='on';]]}
+summary[#summary+1] = {[[CREATE SCHEMA IF NOT EXISTS SYS_OLD;]]}
+
+local suc1, res1 = pquery([[select schema_name, object_name from exa_syscat
+                                                           where instr(object_name,'EXA_USER_') = 0
+                                                             and instr(object_name,'EXA_ALL_') = 0
+                                                             and instr(object_name,'AUDIT') = 0
+                        ; ]])
+
+if suc1 then
+        for i=1, #res1 do
+                summary[#summary+1] = {[[create or replace table SYS_OLD.]]..res1[i][2]..[[ like ]]..res1[i][1]..[[.]]..res1[i][2]..[[;]]}
+                summary[#summary+1] = {[[import into SYS_OLD.]]..res1[i][2]..[[ from local csv file ']]..'&'..[[1/]]..res1[i][2]..[[.csv.gz';]]}
+        end
+else
+        local error_msg = "ERR: ["..res1.error_code.."] "..res1.error_message
+        exit(query([[SELECT :error as ERROR FROM DUAL;]], {error=error_msg}))
+end
+
 return summary, "DDL varchar(2000000)"
 
 /
