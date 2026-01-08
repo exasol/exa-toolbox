@@ -55,6 +55,10 @@ run <- function(ctx) {
         if (!is.null(s$otherPkgs)) {
             ctx$emit("loadedOnly",           getPkgDetails(s, "loadedOnly"))
         }
+        ip <- installed.packages()[,c(1)]
+        if (!is.null(ip)) {
+            ctx$emit("installed.packages", ip)
+        }
     }
 }
 /
