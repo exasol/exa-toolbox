@@ -48,7 +48,7 @@ with
 							S.SESSION_ID,
 							case
 								when
-									(S.STATUS not in ('IDLE', 'DISCONNECTED', 'QUEUED')) OR
+									(S.STATUS not in ('DISCONNECTED', 'QUEUED') and s.status not like 'IDLE%') OR
 									(
 										S.COMMAND_NAME not in ('COMMIT', 'ROLLBACK', 'NOT SPECIFIED')
 									)
@@ -144,7 +144,7 @@ select
 	, case
 		when
 			local.duration_int > interval '1' hour and
-			STATUS = 'IDLE'
+			STATUS like 'IDLE%'
 		then
 			decode(
 				HAS_LOCKS,
