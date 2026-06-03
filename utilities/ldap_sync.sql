@@ -34,6 +34,12 @@ Changes in this version:
 CREATE OR REPLACE PYTHON3 SCALAR SCRIPT EXA_TOOLBOX."GET_AD_ATTRIBUTE" ("LDAP_CONNECTION" VARCHAR(20000) UTF8, "SEARCH_STRING" VARCHAR(20000) UTF8, "ATTR" VARCHAR(10000) UTF8) EMITS ("SEARCH_STRING" VARCHAR(20000) UTF8, "ATTR" VARCHAR(10000) UTF8, "VAL" VARCHAR(10000) UTF8) AS
 import ldap
 
+
+def validate_ldap_uri(uri):
+	if not uri or not (uri.startswith('ldap://') or uri.startswith('ldaps://')):
+		raise Exception('LDAP server connection string should follow format ldap://host[:port] or ldaps://host[:port]')
+
+
 def run(ctx):
 	# The below information corresponds to the user needed to connect to ldap who can traverse the ldap structure and pull out user attributes.
 	# This information should be stored in a CONNECTION object and you must GRANT ACCESS ON <CONNECTION> FOR <SCRIPT> TO <USER>
@@ -42,6 +48,7 @@ def run(ctx):
 	user = exa.get_connection(ctx.LDAP_CONNECTION).user   #technical user for LDAP
 	password = exa.get_connection(ctx.LDAP_CONNECTION).password  #pwd of technical user
 	encoding = "utf8"  #may depend on ldap server, try latin1 or cp1252 if you get problems with special characters
+	ldapClient = None
 
 	try:
 		#Sets a timeout of 5 seconds to connect to LDAP
@@ -51,6 +58,8 @@ def run(ctx):
 		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)   # required options for SSL without cert checking
 		ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 		
+		validate_ldap_uri(uri)
+
 		# Connects to LDAP
 		ldapClient = ldap.initialize(uri)
 		
@@ -70,8 +79,9 @@ def run(ctx):
 
 	except ldap.NO_SUCH_OBJECT:
 		ctx.emit(ctx.SEARCH_STRING, ctx.ATTR, 'No such object')
-	else:
-		ldapClient.unbind_s()
+	finally:
+		if ldapClient is not None:
+			ldapClient.unbind_s()
 
 /
 
@@ -86,6 +96,12 @@ CREATE OR REPLACE PYTHON3 SCALAR SCRIPT EXA_TOOLBOX."LDAP_HELPER" ("LDAP_CONNECT
 
 import ldap
 
+
+def validate_ldap_uri(uri):
+	if not uri or not (uri.startswith('ldap://') or uri.startswith('ldaps://')):
+		raise Exception('LDAP server connection string should follow format ldap://host[:port] or ldaps://host[:port]')
+
+
 def run(ctx):
 	# The below information corresponds to the user needed to connect to ldap who can traverse the ldap structure and pull out user attributes.
 	# This information should be stored in a CONNECTION object and you must GRANT ACCESS ON <CONNECTION> FOR <SCRIPT> TO <USER>
@@ -94,6 +110,7 @@ def run(ctx):
 	user = exa.get_connection(ctx.LDAP_CONNECTION).user   #technical user for LDAP
 	password = exa.get_connection(ctx.LDAP_CONNECTION).password  #pwd of technical user
 	encoding = "utf8"  #may depend on ldap server, try latin1 or cp1252 if you get problems with special characters
+	ldapClient = None
 
 	try:
 		#Sets a timeout of 5 seconds to connect to LDAP
@@ -103,6 +120,8 @@ def run(ctx):
 		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)   # required options for SSL without cert checking
 		ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 		
+		validate_ldap_uri(uri)
+
 		# Connects to LDAP
 		ldapClient = ldap.initialize(uri)
 		
@@ -127,7 +146,8 @@ def run(ctx):
 			raise ldap.LDAPError(e.message['desc'])
 		
 	finally:
-		ldapClient.unbind_s()		
+		if ldapClient is not None:
+			ldapClient.unbind_s()		
 
 /
 
