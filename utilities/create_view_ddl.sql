@@ -43,7 +43,7 @@ schema = {
 			if (schema_is_virtual == true) then
 				local av2_success, av2_res = pquery([[select
 	vs.schema_name
-	, ]] .. adapter_script_expression .. [[ as adapter_script -- use the following expression for version 8: '"' || vs.adapter_script_schema || '"."' || vs.adapter_script_name || '"'
+	, ]] .. adapter_script_expression .. [[ as adapter_script
 	, 'CREATE VIRTUAL SCHEMA "'||vs.schema_name||'"
 USING '||local.adapter_script||' WITH
 '|| group_concat(p.property_name||' = '''||p.property_value||'''' order by p.property_name separator '
