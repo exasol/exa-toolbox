@@ -1,7 +1,7 @@
 /*
         The scripts to accelerate importing data from Bigquery to Exasol by means of using an intermediate CSV file.
         
-        Originally mentioned in article https://exasol.my.site.com/s/article/Statistics-export-for-support?language=en_US
+        Originally mentioned in article https://exasol.my.site.com/s/article/Importing-and-Exporting-Data-with-Google-Bigquery?language=en_US
 */
 
 
