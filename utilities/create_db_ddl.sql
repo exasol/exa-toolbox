@@ -40,62 +40,6 @@ LIMITATIONS:
         - Virtual Schemas will not be created if the required drivers are not installed beforehand
 TODO:
         - omit privs for invalid views?
-CHANGE LOG:
-2018-06-15
-        - Script now creates DDL for users who are authenticated using LDAP (using force).
-        - Added OPEN SCHEMA commands before Script DDL
-        - Allowed option to write the data into a table (only one-line supported). To change the table location, please change lines 670 and 673
-2018-08-30
-        - return in row is simply not possible, the output is longer than 2.000.000
-        - the same applies to writing in a single table column
-        - return is splitted in parts the same way the table is written
-        - ddl.sql file remains same (export with group_concat)
-        - fixed creation errors with added 'or replace' to get a newer version installed
-2018-12-28
-        - Enabled versioning for 6.1 (still compatible for version 6)
-        - Fixed Kerberos authentication (no lines need to be uncommented)
-        - check that calling user has "SELECT ANY DICTIONARY" privilege
-        - 6.1 FEATURE: Added support for Custom Priority groups
-        - 6.1 FEATURE: Added support for impersonation
-        - 6.1 FEATURE: Added support for partition keys
-        - 6.1 FEATURE: Added support for schema quotas
-        - 6.1 FEATURE: Added support for password policies on system-wide or user-based
-        - Adds ALTER SYSTEM/SESSION commands to set the parameters as they were on the old system
-        - Virtual schemas are created
-        - Script execution now works in DBVisualizer
-        - Removed return_in_one_row parameter
-        - Removed nulls from the output
-        - Invalid views WILL be created
-2019-01-30
-        - Added new LUA script exa_toolbox."RESTORE_SYS"
-        - Replace LUA script exa_toolbox."BACKUP_SYS"
-        - Format. Removed blank lines. Adjust Tab and spaces
-2019-03-22
-        - Added handling of DDL that was over 2 million characters
-        - Fixed bug regarding empty connection strings in connection objects
-2021
-        - Added consumer groups (v7.0)
-2021-10-07
-        - Changes in EXA_Parameters, new values to consider
-        - Fix compile error against 7.1
-        - Added new options IDLE_TIMEOUT and QUERY_TIMEOUT to consumer groups
-2021-12-10
-        - Changed add_script according to community request (handle duplicate names)
-2022-01-07
-        - Added snapshot execution (for 6.2 and 7.0 users)
-2022-08-30
-		- Improved delimitation of identifiers
-		- Added support for OpenID users
-		- Simplified some queries and replaced some loops with Lua's 1
-		- Accounted the split of EXA_DBA_VIRTUAL_SCHEMA.ADAPTER_SCRIPT column in 8.0
-		- Fixed schemas order
-		- Changed backup format from .csv to .csv.gz
-2022-11-27
-		- Added group_concat for obj-grants (reduces file size and exec time on restore)
-2023-06-26
-		- Grants on invalid views are now included by default.
-		Executing GRANT on an invalid view requires system privilege "GRANT ANY OBJECT PRIVILEGE".
-		If users want to exclude grants on invalid views they need to adapt the part of script responsible for object privileges.
 */
 
 -- sqlstring concatenation
@@ -332,14 +276,15 @@ function add_all_rights()                                       -- ADD ALL RIGHT
 
         -- object privileges
         -- Both UNION ALL branches are preserved to keep a simple possibility to define special behavior for grants on invalid views
-        art2_success, art2_res = pquery([[/*snapshot execution*/SELECT 'GRANT '||GROUP_CONCAT(PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
+
+        art2_success, art2_res = pquery([[/*snapshot execution*/SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
                                         ' TO "'||GRANTEE||'"' grant_text
                                       FROM (select * from EXA_DBA_OBJ_PRIVS where object_type = 'VIEW') op
                                       /*join (select distinct COLUMN_SCHEMA, COLUMN_TABLE from exa_dba_columns where status is null) cols
                                          on cols.COLUMN_TABLE = op.OBJECT_NAME and cols.COLUMN_SCHEMA = op.OBJECT_SCHEMA*/
 				      group by OBJECT_SCHEMA,OBJECT_NAME,GRANTEE
                                       union all
-                                      SELECT 'GRANT '||GROUP_CONCAT(PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
+                                      SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
                                         ' TO "'||GRANTEE||'"' grant_text
                                       FROM EXA_DBA_OBJ_PRIVS where object_type <> 'VIEW'
 				      group by OBJECT_SCHEMA,OBJECT_NAME,GRANTEE]])
@@ -362,7 +307,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
 
         -- connection privileges
 
-        art3_success,art3_res = pquery([[/*snapshot execution*/select 'GRANT CONNECTION "' || granted_connection ||'" to ' || group_concat('"' || grantee || '"' order by grantee) || case ADMIN_OPTION when 'TRUE' then ' WITH ADMIN OPTION;' else ';' end as expr from exa_dba_connection_privs group by granted_connection, admin_option]])
+        art3_success,art3_res = pquery([[/*snapshot execution*/select 'GRANT CONNECTION "' || granted_connection ||'" to ' || group_concat('"' || grantee || '"' order by grantee) || case ADMIN_OPTION when TRUE then ' WITH ADMIN OPTION;' else ';' end as expr from exa_dba_connection_privs group by granted_connection, admin_option]])
         if not art3_success then
                 error('Error in art3.')
         elseif (#art3_res) == 0 then
@@ -371,16 +316,17 @@ function add_all_rights()                                       -- ADD ALL RIGHT
                 sqlstr_lf()
                 sqlstr_commit()
         else
-        sqlstr_flush()
-        for i=1, (#art3_res) do
-                sqlstr_add('\t'..art3_res[i].EXPR..'\n')
-                sqlstr_lf()
-                sqlstr_commit()
-        end
+	        sqlstr_flush()
+	        for i=1, (#art3_res) do
+	                sqlstr_add('\t'..art3_res[i].EXPR..'\n')
+	                sqlstr_lf()
+	                sqlstr_commit()
+	        end
 
         end
 
         -- impersonation privileges (version >= 6.1)
+
         if (version_major >= 6 and (version_major > 6 or version_minor >= 1)) then
 
                 art4_success, art4_res = pquery([[/*snapshot execution*/SELECT 'GRANT IMPERSONATION ON "'|| IMPERSONATION_ON || '" TO "' || GRANTEE || '";' EXPR FROM EXA_DBA_IMPERSONATION_PRIVS]])
@@ -399,6 +345,49 @@ function add_all_rights()                                       -- ADD ALL RIGHT
                 sqlstr_lf()
                 sqlstr_commit()
                 end
+        end
+        
+        -- connection ACCESS privileges (for UDFs and VS adapters)
+        
+        art5_success,art5_res = pquery([[/*snapshot execution*/
+SELECT
+	'GRANT ' || rp.privilege || ' ON ' || rp.object_type || ' "' || rp.object_name || '" ' || 
+case
+	when rp.for_object_type='SCHEMA' then 'FOR ' || rp.for_object_type || ' "' || rp.for_object_name || '" '
+	when rp.for_object_type='SCRIPT' then 'FOR ' || rp.for_object_type || ' "' || rp.for_object_schema || '"."' || rp.for_object_name || '" ' 
+end
+	|| 'to ' || GROUP_CONCAT(distinct '"' || rp.grantee || '"' ORDER BY grantee) || ';' AS expr
+FROM
+	EXA_DBA_RESTRICTED_OBJ_PRIVS rp
+		left join exa_dba_users u
+		on rp.grantee = u.user_name
+			left join exa_dba_roles r
+			on rp.grantee = r.role_name
+where
+	1=1
+	and (u.user_name is not null or r.role_name is not null) -- SPOT-21909
+GROUP BY
+	rp.privilege
+	, rp.object_type
+	, rp.object_name
+	, rp.for_object_name
+	, rp.for_object_type
+	, rp.for_object_schema
+;]])
+        if not art5_success then
+                error('Error in art5.')
+        elseif (#art5_res) == 0 then
+                sqlstr_flush()
+                sqlstr_add('\t-- No connection ACCESS privileges found. \n')
+                sqlstr_lf()
+                sqlstr_commit()
+        else
+	        sqlstr_flush()
+	        for i=1, (#art5_res) do
+	                sqlstr_add('\t'..art5_res[i].EXPR..'\n')
+	                sqlstr_lf()
+	                sqlstr_commit()
+	        end
         end
 end
 
@@ -804,7 +793,8 @@ function add_system_parameters()                                --ADD SYSTEM PAR
                         if asp1_res[i].PARAMETER_NAME == ('NLS_FIRST_DAY_OF_WEEK') or
                            asp1_res[i].PARAMETER_NAME == ('QUERY_TIMEOUT') or
                            asp1_res[i].PARAMETER_NAME == ('IDLE_TIMEOUT') or
-                           asp1_res[i].PARAMETER_NAME == ('ST_MAX_DECIMAL_DIGITS') then
+                           asp1_res[i].PARAMETER_NAME == ('ST_MAX_DECIMAL_DIGITS') or
+                           asp1_res[i].PARAMETER_NAME == ('REPLICATION_BORDER') then
                                 sqlstr_add('ALTER SYSTEM SET '..asp1_res[i].PARAMETER_NAME..' = '..asp1_res[i].SYSTEM_VALUE..';\n')
                         -- FOR DOUBLE QUOTES
                         elseif asp1_res[i].PARAMETER_NAME == ('DEFAULT_PRIORITY_GROUP') or
@@ -817,19 +807,24 @@ function add_system_parameters()                                --ADD SYSTEM PAR
                 end
         end
 
-        asp2_suc, asp2_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_PARAMETERS WHERE SESSION_VALUE IS NOT NULL AND PARAMETER_NAME NOT IN ('QUERY_TIMEOUT', 'DEFAULT_PRIORITY_GROUP','DEFAULT_CONSUMER_GROUP','PASSWORD_EXPIRY_POLICY','PASSWORD_SECURITY_POLICY','TEMP_DB_RAM_LIMIT','USER_TEMP_DB_RAM_LIMIT')]])
+        asp2_suc, asp2_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_PARAMETERS WHERE SESSION_VALUE IS NOT NULL AND PARAMETER_NAME NOT IN ('QUERY_TIMEOUT', 'DEFAULT_PRIORITY_GROUP','DEFAULT_CONSUMER_GROUP','PASSWORD_EXPIRY_POLICY','PASSWORD_SECURITY_POLICY','TEMP_DB_RAM_LIMIT','USER_TEMP_DB_RAM_LIMIT','SQL_IDENTIFIER_COMPARISON','REPLICATION_BORDER')]])
 
         if not (asp2_suc) then
                 error('Error retrieving session parameters')
         else
                 sqlstr_add('--SESSION PARAMETERS --------------------------------------------------------------------\n')
                 for i=1, #asp2_res do
+                        -- FOR NUMBERS
                         if asp2_res[i].PARAMETER_NAME == ('NLS_FIRST_DAY_OF_WEEK') or
+                           asp2_res[i].PARAMETER_NAME == ('QUERY_TIMEOUT') or
                            asp2_res[i].PARAMETER_NAME == ('IDLE_TIMEOUT') or
                            asp2_res[i].PARAMETER_NAME == ('ST_MAX_DECIMAL_DIGITS') then
                                 sqlstr_add('ALTER SESSION SET '..asp2_res[i].PARAMETER_NAME..' = '..asp2_res[i].SESSION_VALUE..';\n')
-                        elseif asp2_res[i].PARAMETER_NAME == 'DEFAULT_PRIORITY_GROUP' then
+                        -- FOR DOUBLE QUOTES
+                        elseif asp2_res[i].PARAMETER_NAME == ('DEFAULT_PRIORITY_GROUP') or
+                               asp2_res[i].PARAMETER_NAME == ('DEFAULT_CONSUMER_GROUP') then
                                 sqlstr_add('ALTER SESSION SET '..asp2_res[i].PARAMETER_NAME..' = "'..asp2_res[i].SESSION_VALUE..'";\n')
+                        -- FOR SINGLE QUOTES
                         else
                                 sqlstr_add('ALTER SESSION SET '..asp2_res[i].PARAMETER_NAME..' = \''..asp2_res[i].SESSION_VALUE..'\';\n')
                         end
