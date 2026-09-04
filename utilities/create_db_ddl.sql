@@ -277,7 +277,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
         -- object privileges
         -- Both UNION ALL branches are preserved to keep a simple possibility to define special behavior for grants on invalid views
 
-        art2_success, art2_res = pquery([[/*snapshot execution*/SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
+        art2_success, art2_res = pquery([[/*snapshot execution*/SELECT * FROM (SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
                                         ' TO "'||GRANTEE||'"' grant_text
                                       FROM (select * from EXA_DBA_OBJ_PRIVS where object_type = 'VIEW') op
                                       /*join (select distinct COLUMN_SCHEMA, COLUMN_TABLE from exa_dba_columns where status is null) cols
@@ -287,7 +287,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
                                       SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
                                         ' TO "'||GRANTEE||'"' grant_text
                                       FROM EXA_DBA_OBJ_PRIVS where object_type <> 'VIEW'
-				      group by OBJECT_SCHEMA,OBJECT_NAME,GRANTEE]])
+				      group by OBJECT_SCHEMA,OBJECT_NAME,GRANTEE) ORDER BY OBJECT_SCHEMA,OBJECT_NAME,GRANTEE]])
 
         if not art2_success then
                 error('Error in art2')
@@ -365,7 +365,7 @@ FROM
 			on rp.grantee = r.role_name
 where
 	1=1
-	and (u.user_name is not null or r.role_name is not null) -- SPOT-21909
+	and (u.user_name is not null or r.role_name is not null) -- https://docs.exasol.com/db/latest/changelogs/21909.htm
 GROUP BY
 	rp.privilege
 	, rp.object_type
