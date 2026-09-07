@@ -277,17 +277,17 @@ function add_all_rights()                                       -- ADD ALL RIGHT
         -- object privileges
         -- Both UNION ALL branches are preserved to keep a simple possibility to define special behavior for grants on invalid views
 
-        art2_success, art2_res = pquery([[/*snapshot execution*/SELECT * FROM (SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
+        art2_success, art2_res = pquery([[/*snapshot execution*/SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE order by PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
                                         ' TO "'||GRANTEE||'"' grant_text
                                       FROM (select * from EXA_DBA_OBJ_PRIVS where object_type = 'VIEW') op
                                       /*join (select distinct COLUMN_SCHEMA, COLUMN_TABLE from exa_dba_columns where status is null) cols
                                          on cols.COLUMN_TABLE = op.OBJECT_NAME and cols.COLUMN_SCHEMA = op.OBJECT_SCHEMA*/
 				      group by OBJECT_SCHEMA,OBJECT_NAME,GRANTEE
                                       union all
-                                      SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
+                                      SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE order by PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
                                         ' TO "'||GRANTEE||'"' grant_text
                                       FROM EXA_DBA_OBJ_PRIVS where object_type <> 'VIEW'
-				      group by OBJECT_SCHEMA,OBJECT_NAME,GRANTEE) ORDER BY OBJECT_SCHEMA,OBJECT_NAME,GRANTEE]])
+				      group by OBJECT_SCHEMA,OBJECT_NAME,GRANTEE]])
 
         if not art2_success then
                 error('Error in art2')
