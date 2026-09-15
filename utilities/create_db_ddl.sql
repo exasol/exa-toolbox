@@ -94,6 +94,7 @@ function ddl_endings()
         sqlstr_flush()
         sqlstr_lf()
         sqlstr_add('COMMIT;')
+        sqlstr_lf()
         sqlstr_commit()
 end
 
@@ -1027,6 +1028,7 @@ idx = 0
 write_table('HEADER',ddl)
 
 add_system_parameters()
+ddl_endings()
 write_table('SYSTEM PARAMETERS', ddl)
                                                                                 -- roles, users
 if add_user_structure then
