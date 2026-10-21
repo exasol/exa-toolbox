@@ -258,7 +258,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
 
         -- system privileges
 
-        art12_success, art12_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_SYS_PRIVS WHERE NOT GRANTEE in ('SYS', 'DBA')]])
+        art12_success, art12_res = pquery([[/*snapshot execution*/SELECT * FROM EXA_DBA_SYS_PRIVS WHERE NOT GRANTEE in ('SYS', 'DBA') order by 1,2,3]])
         if not art12_success then
                 error('Error in art12')
         elseif (#art12_res)>0 then
@@ -278,7 +278,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
         -- object privileges
         -- Both UNION ALL branches are preserved to keep a simple possibility to define special behavior for grants on invalid views
 
-        art2_success, art2_res = pquery([[/*snapshot execution*/SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE order by PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
+        art2_success, art2_res = pquery([[/*snapshot execution*/select * from(SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE order by PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
                                         ' TO "'||GRANTEE||'"' grant_text
                                       FROM (select * from EXA_DBA_OBJ_PRIVS where object_type = 'VIEW') op
                                       /*join (select distinct COLUMN_SCHEMA, COLUMN_TABLE from exa_dba_columns where status is null) cols
@@ -288,7 +288,7 @@ function add_all_rights()                                       -- ADD ALL RIGHT
                                       SELECT 'GRANT '||GROUP_CONCAT(distinct PRIVILEGE order by PRIVILEGE)||' ON "'||case when OBJECT_SCHEMA is not null then OBJECT_SCHEMA||'"."'||OBJECT_NAME||'"' else OBJECT_NAME||'"' end ||
                                         ' TO "'||GRANTEE||'"' grant_text
                                       FROM EXA_DBA_OBJ_PRIVS where object_type <> 'VIEW'
-				      group by OBJECT_SCHEMA,OBJECT_NAME,GRANTEE]])
+				      group by OBJECT_SCHEMA,OBJECT_NAME,GRANTEE) order by 1]])
 
         if not art2_success then
                 error('Error in art2')
@@ -1028,6 +1028,7 @@ idx = 0
 write_table('HEADER',ddl)
 
 add_system_parameters()
+-- To avoid a lock thats make non-snapshot queries to system views like EXA_DBA_SESSIONS hang while DDL execution is running
 ddl_endings()
 write_table('SYSTEM PARAMETERS', ddl)
                                                                                 -- roles, users
@@ -1120,6 +1121,8 @@ else
 	   
 
         if add_user_structure then
+          -- To avoid a transaction collision because of a possible overlap with LogServer writes to EXA_STATISTICS
+          ddl_endings()
           change_schema_owners()
           write_table('SCHEMA OWNERS',ddl)
         end
