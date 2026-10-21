@@ -1028,7 +1028,7 @@ idx = 0
 write_table('HEADER',ddl)
 
 add_system_parameters()
--- To avoid a lock thats make non-snapshot queries to system views like EXA_DBA_SESSIONS hang while DDL execution is running
+-- To avoid a lock that makes non-snapshot queries to system views like EXA_DBA_SESSIONS hang while DDL execution is running
 ddl_endings()
 write_table('SYSTEM PARAMETERS', ddl)
                                                                                 -- roles, users
